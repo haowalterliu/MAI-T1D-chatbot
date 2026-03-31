@@ -1,12 +1,14 @@
-import TwoColumnLayout from '../components/layout/TwoColumnLayout';
-import SelectionPanel from '../components/selection/SelectionPanel';
+import ThreeColumnLayout from '../components/layout/ThreeColumnLayout';
 import ChatInterface from '../components/chat/ChatInterface';
+import SelectionPanel from '../components/selection/SelectionPanel';
+import OutputPanel from '../components/output/OutputPanel';
 
 function SelectionPage() {
   return (
-    <TwoColumnLayout
-      leftPanel={<SelectionPanel />}
-      rightPanel={<ChatInterface page="selection" />}
+    <ThreeColumnLayout
+      leftPanel={<ChatInterface page="selection" />}
+      midPanel={<SelectionPanel />}
+      rightPanel={<OutputPanel />}
     />
   );
 }

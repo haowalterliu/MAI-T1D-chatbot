@@ -1,36 +1,33 @@
-/* ── Base container ── */
-.layout-container {
+.three-col-container {
   height: 100vh;
   display: flex;
   flex-direction: row;
   overflow: hidden;
   background: var(--color-bg-primary);
-  position: relative;
 }
 
-.layout-container.is-dragging {
+.three-col-container.is-dragging {
   cursor: col-resize;
   user-select: none;
 }
 
-/* ── Panels ── */
-.left-panel {
+.col-panel {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--color-bg-surface);
   flex-shrink: 0;
 }
 
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.col-panel-left {
   background: var(--color-bg-primary);
-  flex-shrink: 0;
 }
 
-/* ── Drag handle ── */
+.col-panel-mid,
+.col-panel-right {
+  background: var(--color-bg-primary);
+}
+
+/* Dividers */
 .resize-handle {
   width: 5px;
   flex-shrink: 0;
@@ -40,12 +37,10 @@
   cursor: col-resize;
   background: transparent;
   transition: background 0.15s ease;
-  position: relative;
-  z-index: var(--z-base);
 }
 
 .resize-handle:hover,
-.layout-container.is-dragging .resize-handle {
+.three-col-container.is-dragging .resize-handle {
   background: var(--color-accent-blue);
 }
 
@@ -57,46 +52,32 @@
 }
 
 .resize-handle:hover .resize-handle-bar,
-.layout-container.is-dragging .resize-handle-bar {
+.three-col-container.is-dragging .resize-handle-bar {
   background: transparent;
 }
 
-/* ── Tablet (≤ 1024px): fix 50/50, hide drag handle ── */
+/* Tablet: 3 equal columns, no drag */
 @media (max-width: 1024px) {
-  .layout-container {
-    flex-direction: row;
+  .col-panel {
+    width: 33.333% !important;
   }
-
-  .left-panel,
-  .right-panel {
-    width: 50% !important;
-  }
-
   .resize-handle {
     display: none;
   }
 }
 
-/* ── Mobile (≤ 640px): stack vertically ── */
+/* Mobile: stack vertically */
 @media (max-width: 640px) {
-  .layout-container {
+  .three-col-container {
     flex-direction: column;
     height: auto;
     min-height: 100vh;
   }
-
-  .left-panel,
-  .right-panel {
+  .col-panel {
     width: 100% !important;
-    height: auto;
+    min-height: 50vh;
     overflow: visible;
   }
-
-  /* Give chat a fixed height on mobile so it doesn't collapse */
-  .right-panel {
-    min-height: 50vh;
-  }
-
   .resize-handle {
     display: none;
   }

@@ -6,7 +6,7 @@ import DatasetRecommendation from './DatasetRecommendation';
 import './ChatInterface.css';
 
 function ChatInterface({ page }) {
-  const { messages, addMessage } = useExperiment();
+  const { messages, addMessage, config } = useExperiment();
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ function ChatInterface({ page }) {
     });
 
     setTimeout(() => {
-      addMessage(generateAIResponse(text, page));
+      addMessage(generateAIResponse(text, page, config.hypothesis));
     }, 500);
   };
 
@@ -32,10 +32,6 @@ function ChatInterface({ page }) {
 
   return (
     <div className="chat-interface">
-      <div className="chat-header">
-        <span className="chat-header-title">AI Assistant</span>
-      </div>
-
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="chat-empty-state">{placeholder}</div>
@@ -61,15 +57,18 @@ function ChatInterface({ page }) {
   );
 }
 
-function generateAIResponse(userMessage, page) {
+function generateAIResponse(userMessage, page, hypothesis) {
   const lowerMsg = userMessage.toLowerCase();
+  const hypothesisText = hypothesis?.trim()
+    ? hypothesis.trim()
+    : 'your research focus';
 
   if (page === 'selection') {
     if (lowerMsg.includes('dataset') || lowerMsg.includes('data') || lowerMsg.includes('recommend')) {
       return {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Based on your research focus, I recommend the following datasets:',
+        content: `Based on ${hypothesisText}, I recommend the following datasets:`,
         recommendations: [
           { id: 'hpap', reason: 'Best for beta cell analysis with comprehensive multi-omics modalities' },
           { id: 'teddy', reason: 'Longitudinal data ideal for tracking T1D disease progression' },
@@ -81,7 +80,7 @@ function generateAIResponse(userMessage, page) {
       return {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'For T1D research, I recommend the **Single Cell Model** if you\'re studying cellular heterogeneity, or the **Whole Genome Model** for genome-wide association patterns. The Spatial Data Model is useful when tissue architecture matters.',
+        content: `For ${hypothesisText}, I recommend Single Cell FM if you're studying cellular heterogeneity, Genomic FM for genome-wide association patterns, or Spatial FM when tissue architecture matters.`,
         timestamp: new Date(),
       };
     }
@@ -92,7 +91,7 @@ function generateAIResponse(userMessage, page) {
       return {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'The top finding shows that **INS** (insulin gene) has the highest feature importance (0.23), which is expected in T1D research. **PDX1** and **MAFA** are key transcription factors for beta cell identity — their high importance suggests beta cell dysfunction is a primary driver in your selected datasets.',
+        content: `INS (insulin gene) has the highest feature importance (0.23), expected in T1D research. PDX1 and MAFA are key transcription factors for beta cell identity — their high importance suggests beta cell dysfunction is a primary driver in your selected datasets.`,
         timestamp: new Date(),
       };
     }

@@ -1,81 +1,136 @@
 .dataset-recommendation {
-  margin: var(--space-md) 0;
+  margin: var(--space-sm) 0;
   padding: var(--space-md);
-  background: var(--color-bg-surface);
+  background: var(--color-bg-primary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .dataset-recommendation:hover {
-  border-color: var(--color-accent-blue);
-  box-shadow: var(--shadow-card);
+  border-color: var(--color-text-secondary);
 }
 
-.recommendation-header {
+/* Header */
+.rec-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: var(--space-sm);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
-.recommendation-title {
+.rec-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
 }
 
-.recommendation-add-btn {
-  padding: var(--space-xs) var(--space-md);
+/* Add / Added button */
+.rec-add-btn {
+  flex-shrink: 0;
+  padding: 3px var(--space-sm);
   font-family: var(--font-family);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: white;
-  background: var(--color-accent-blue);
-  border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.recommendation-add-btn:hover:not(:disabled) {
+/* + Add: filled blue */
+.rec-add-btn:not(.added) {
+  background: var(--color-accent-blue);
+  color: white;
+  border: 1px solid var(--color-accent-blue);
+}
+
+.rec-add-btn:not(.added):hover {
   background: var(--color-accent-blue-hover);
+  border-color: var(--color-accent-blue-hover);
 }
 
-.recommendation-add-btn.added {
-  background: var(--color-success-green);
+/* ✓ Added: outline blue — distinct from filled Add */
+.rec-add-btn.added {
+  background: transparent;
+  color: var(--color-accent-blue);
+  border: 1px solid var(--color-accent-blue);
   cursor: default;
+  opacity: 0.75;
 }
 
-.recommendation-add-btn:disabled {
-  cursor: default;
+/* Donor info */
+.rec-donor-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 2px 0;
 }
 
-.recommendation-meta {
+.rec-donor-type {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  margin: var(--space-xs) 0 var(--space-sm) 0;
+  margin: 0 0 var(--space-sm) 0;
 }
 
-.recommendation-modalities {
+/* Meta row: keyInfo chips + modality tags + cell type inline */
+.rec-meta-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-sm);
   margin-bottom: var(--space-sm);
 }
 
-.recommendation-reason {
-  font-size: var(--font-size-sm);
+.rec-key-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.rec-key-chip-label {
+  color: var(--color-text-secondary);
+}
+
+.rec-key-chip-value {
   color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.rec-cell-type {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.rec-reason {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
   line-height: var(--line-height-normal);
   margin: 0 0 var(--space-sm) 0;
 }
 
-.recommendation-view-details {
+.rec-view-details {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-family);
   font-size: var(--font-size-xs);
-  color: var(--color-accent-blue);
   font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rec-view-details:hover {
+  color: var(--color-accent-blue);
 }

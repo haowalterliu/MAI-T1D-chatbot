@@ -1,66 +1,75 @@
-import Tag from '../common/Tag';
 import './DatasetDetailModal.css';
 
-function DatasetDetailModal({ dataset, onClose }) {
-  // Derive column headers from first row of sampleData
-  const columns = dataset.sampleData && dataset.sampleData.length > 0
-    ? Object.keys(dataset.sampleData[0])
-    : [];
+const TABLE_COLUMNS = ['age', 'sex', 'bmi', 'clinicalDiagnosis', 't1dStage', 'diseaseStatus', 'diseaseDuration', 'autoAntibody', 'autoAntibodyPositive', 'cellType'];
+const TABLE_HEADERS = {
+  age: 'Age',
+  sex: 'Sex',
+  bmi: 'BMI',
+  clinicalDiagnosis: 'Clinical Diagnosis',
+  t1dStage: 'T1D Stage',
+  diseaseStatus: 'Disease Status',
+  diseaseDuration: 'Disease Duration',
+  autoAntibody: 'Auto Antibody',
+  autoAntibodyPositive: 'AAb+',
+  cellType: 'Cell / Tissue Type',
+};
 
-  const formatHeader = (key) =>
-    key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+function DatasetDetailModal({ dataset, onClose }) {
+  const { metadata, sampleData = [] } = dataset;
 
   return (
     <>
       <div className="modal-overlay" onClick={onClose} />
       <div className="dataset-detail-modal">
+
         {/* Header */}
         <div className="modal-header">
-          <div className="modal-header-left">
+          <div>
             <h2 className="modal-title">{dataset.title}</h2>
             <p className="modal-subtitle">{dataset.donorType}</p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
-        {/* Meta row */}
-        <div className="modal-meta-row">
-          <span className="modal-meta-item">
-            <span className="modal-meta-label">Donors</span>
-            <span className="modal-meta-value">{dataset.donorCount}</span>
-          </span>
-          <span className="modal-meta-item">
-            <span className="modal-meta-label">Cell Type</span>
-            <span className="modal-meta-value">{dataset.cellType}</span>
-          </span>
-          <div className="modal-meta-tags">
-            {dataset.modalities.map(m => <Tag key={m} label={m} />)}
+        {/* Quick stats */}
+        <div className="modal-stats-row">
+          <div className="modal-stat">
+            <span className="modal-stat-label">Donors</span>
+            <span className="modal-stat-value">{dataset.donorCount}</span>
+          </div>
+          {metadata?.ageRange && (
+            <div className="modal-stat">
+              <span className="modal-stat-label">Age Range</span>
+              <span className="modal-stat-value">{metadata.ageRange}</span>
+            </div>
+          )}
+          <div className="modal-stat">
+            <span className="modal-stat-label">Cell / Tissue Type</span>
+            <span className="modal-stat-value">{dataset.cellType}</span>
           </div>
         </div>
 
-        {/* Sample data table */}
-        <div className="modal-table-section">
-          <p className="modal-table-label">Sample Data ({dataset.sampleData.length} rows shown)</p>
-          <div className="modal-table-wrapper">
-            <table className="modal-table">
-              <thead>
-                <tr>
-                  {columns.map(col => (
-                    <th key={col}>{formatHeader(col)}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {dataset.sampleData.map((row, i) => (
-                  <tr key={i}>
-                    {columns.map(col => (
-                      <td key={col}>{row[col]}</td>
+        <div className="modal-body">
+          {/* Sample data table */}
+          {sampleData.length > 0 && (
+            <div className="modal-section">
+              <p className="modal-section-label">({dataset.donorCount} rows shown)</p>
+              <div className="modal-table-wrapper">
+                <table className="modal-table">
+                  <thead>
+                    <tr>{TABLE_COLUMNS.map(c => <th key={c}>{TABLE_HEADERS[c]}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {sampleData.map((row, i) => (
+                      <tr key={i}>
+                        {TABLE_COLUMNS.map(c => <td key={c}>{row[c] ?? '—'}</td>)}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

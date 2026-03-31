@@ -1,20 +1,17 @@
 export const demoModels = [
   {
-    id: 'whole-genome',
-    name: 'Whole Genome Model',
-    description: 'Analyzes genome-wide association patterns across donors to identify disease-related genetic variants and polygenic risk scores.',
-    compatibleModalities: ['RNA-seq', 'ATAC-seq', 'WGS']
+    id: 'spatial-fm',
+    name: 'Spatial FM',
+    description: 'Foundation model for spatial transcriptomics. Maps spatial organization of immune cell infiltration and tissue architecture in pancreatic sections.',
   },
   {
-    id: 'single-cell',
-    name: 'Single Cell Model',
-    description: 'Examines cellular heterogeneity and cell-type-specific gene expression patterns in pancreatic tissue, identifying rare cell populations.',
-    compatibleModalities: ['scRNA-seq', 'CyTOF']
+    id: 'single-cell-fm',
+    name: 'Single Cell FM',
+    description: 'Foundation model for single-cell multi-omics. Examines cellular heterogeneity and cell-type-specific gene expression patterns, identifying rare beta cell populations.',
   },
   {
-    id: 'spatial',
-    name: 'Spatial Data Model',
-    description: 'Maps spatial organization of immune cell infiltration and tissue architecture in pancreatic sections using imaging-based transcriptomics.',
-    compatibleModalities: ['Spatial transcriptomics', 'Imaging']
-  }
+    id: 'genomic-fm',
+    name: 'Genomic FM',
+    description: 'Foundation model for whole-genome analysis. Identifies disease-related genetic variants and polygenic risk scores across donors genome-wide.',
+  },
 ];

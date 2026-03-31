@@ -12,30 +12,32 @@
   justify-content: flex-start;
 }
 
-.chat-message-content {
+/* User bubble */
+.chat-message-user .chat-message-content {
   max-width: 70%;
   padding: var(--space-md);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   border-radius: var(--radius-lg);
   white-space: pre-wrap;
-}
-
-.chat-message-user .chat-message-content {
   background: var(--color-accent-blue);
   color: white;
 }
 
+/* Assistant — plain text, no bubble */
 .chat-message-assistant .chat-message-content {
-  background: var(--color-bg-surface);
+  max-width: 100%;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
   color: var(--color-text-primary);
-  border: 1px solid var(--color-border-default);
+  white-space: pre-wrap;
 }
 
+/* System messages */
 .chat-message-system .chat-message-content {
-  background: transparent;
+  width: 100%;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   font-style: italic;
   text-align: center;
-  max-width: 100%;
 }

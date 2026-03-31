@@ -5,9 +5,8 @@ import ChatInterface from '../components/chat/ChatInterface';
 function ResultsPage() {
   return (
     <TwoColumnLayout
-      leftPanel={<ResultsPanel />}
-      rightPanel={<ChatInterface page="results" />}
-      showHistorySidebar={true}
+      leftPanel={<ChatInterface page="results" />}
+      rightPanel={<ResultsPanel />}
     />
   );
 }

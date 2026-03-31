@@ -6,11 +6,12 @@ import KeyFindings from './KeyFindings';
 import Visualizations from './Visualizations';
 import RawDataTable from './RawDataTable';
 import ActionButtons from './ActionButtons';
+import HistoryEntry from './HistoryEntry';
 import './ResultsPanel.css';
 
 function ResultsPanel() {
   const navigate = useNavigate();
-  const { history, currentResultIndex } = useExperiment();
+  const { history, currentResultIndex, viewHistoryResult } = useExperiment();
 
   const currentResult = history[currentResultIndex];
 
@@ -43,6 +44,23 @@ function ResultsPanel() {
         <KeyFindings findings={currentResult.results.keyFindings} />
         <Visualizations charts={currentResult.results.visualizations} />
         <RawDataTable data={currentResult.results.rawData} />
+
+        {history.length > 1 && (
+          <div className="results-history">
+            <h3 className="results-history-title">Run History</h3>
+            <div className="results-history-list">
+              {history.map((entry, index) => (
+                <HistoryEntry
+                  key={entry.id}
+                  entry={entry}
+                  index={index}
+                  isActive={index === currentResultIndex}
+                  onClick={() => viewHistoryResult(index)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <ActionButtons onReset={handleReset} onSave={handleSave} />

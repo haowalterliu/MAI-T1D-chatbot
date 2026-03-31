@@ -18,7 +18,7 @@ function DatasetList() {
 
       {selectedDatasets.length === 0 ? (
         <div className="dataset-list-empty">
-          No datasets selected. Ask AI for recommendations →
+          No datasets selected. Ask AI for recommendations
         </div>
       ) : (
         <div className="dataset-list">

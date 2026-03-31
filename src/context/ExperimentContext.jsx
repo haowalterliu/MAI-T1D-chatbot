@@ -3,27 +3,35 @@ import { generateMockResults } from '../data/demoResults';
 
 const ExperimentContext = createContext();
 
+const DEMO_HYPOTHESIS = 'Compare beta cell gene expression patterns between pediatric and adult Type 1 Diabetes patients';
+
 const DEMO_MESSAGES = [
   {
     id: 'demo-1',
     role: 'user',
-    content: 'recommend datasets for T1D research',
+    content: `Recommend datasets to ${DEMO_HYPOTHESIS.toLowerCase()}`,
     timestamp: new Date(),
   },
   {
     id: 'demo-2',
     role: 'assistant',
-    content: 'Based on your research focus, I recommend the following datasets:',
+    content: `Based on your hypothesis to ${DEMO_HYPOTHESIS.toLowerCase()}, I recommend the following datasets:`,
     recommendations: [
-      { id: 'hpap', reason: 'Best for beta cell analysis with comprehensive multi-omics modalities' },
-      { id: 'teddy', reason: 'Longitudinal data ideal for tracking T1D disease progression' },
+      {
+        id: 'hpap',
+        reason: 'Adult T1D pancreas donors with islet-level RNA-seq — ideal for mature beta cell gene expression profiling',
+      },
+      {
+        id: 'teddy',
+        reason: 'Pediatric longitudinal cohort with RNA-seq — enables age-matched comparison of early-onset T1D progression',
+      },
     ],
     timestamp: new Date(),
   },
 ];
 
 const DEMO_CONFIG = {
-  hypothesis: '',
+  hypothesis: DEMO_HYPOTHESIS,
   selectedDatasets: ['hpap', 'teddy'],
   selectedModelId: null,
   pipelineConfigId: null,
@@ -48,14 +56,14 @@ export function ExperimentProvider({ children }) {
       ...prev,
       selectedDatasets: prev.selectedDatasets.includes(datasetId)
         ? prev.selectedDatasets
-        : [...prev.selectedDatasets, datasetId]
+        : [...prev.selectedDatasets, datasetId],
     }));
   };
 
   const removeDataset = (datasetId) => {
     setConfig(prev => ({
       ...prev,
-      selectedDatasets: prev.selectedDatasets.filter(id => id !== datasetId)
+      selectedDatasets: prev.selectedDatasets.filter(id => id !== datasetId),
     }));
   };
 

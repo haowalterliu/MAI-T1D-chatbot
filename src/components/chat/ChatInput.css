@@ -3,7 +3,7 @@
   gap: var(--space-sm);
   padding: var(--space-lg);
   border-top: 1px solid var(--color-border-default);
-  background: var(--color-bg-primary);
+  background: transparent;
   flex-shrink: 0;
 }
 

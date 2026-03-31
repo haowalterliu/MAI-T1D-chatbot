@@ -16,44 +16,45 @@ function DatasetRecommendation({ recommendation }) {
 
   return (
     <>
-      <div
-        className="dataset-recommendation"
-        onClick={() => setShowDetail(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && setShowDetail(true)}
-      >
-        <div className="recommendation-header">
-          <h4 className="recommendation-title">{dataset.title}</h4>
+      <div className="dataset-recommendation">
+        <div className="rec-header">
+          <h4 className="rec-title">{dataset.title}</h4>
           <button
-            className={`recommendation-add-btn ${isAdded ? 'added' : ''}`}
-            onClick={(e) => { e.stopPropagation(); if (!isAdded) addDataset(dataset.id); }}
+            className={`rec-add-btn ${isAdded ? 'added' : ''}`}
+            onClick={() => !isAdded && addDataset(dataset.id)}
             disabled={isAdded}
           >
             {isAdded ? '✓ Added' : '+ Add'}
           </button>
         </div>
 
-        <p className="recommendation-meta">
-          {dataset.donorCount} donors • {dataset.cellType}
-        </p>
+        <p className="rec-donor-count">{dataset.donorCount} donors</p>
 
-        <div className="recommendation-modalities">
-          {dataset.modalities.map(modality => (
-            <Tag key={modality} label={modality} />
+        <div className="rec-meta-row">
+          {dataset.keyInfo && dataset.keyInfo.map((item, i) => (
+            <span key={i} className="rec-key-chip">
+              <span className="rec-key-chip-label">{item.label}</span>
+              <span className="rec-key-chip-value">{item.value}</span>
+            </span>
           ))}
+          {dataset.modalities.map(m => <Tag key={m} label={m} />)}
+          <Tag label={dataset.cellType} />
         </div>
 
-        <p className="recommendation-reason">{recommendation.reason}</p>
+        {recommendation.reason && (
+          <p className="rec-reason">{recommendation.reason}</p>
+        )}
 
-        <span className="recommendation-view-details">View details →</span>
+        <button
+          className="rec-view-details"
+          onClick={() => setShowDetail(true)}
+        >
+          View details
+        </button>
       </div>
 
       {showDetail && (
-        <DatasetDetailModal
-          dataset={dataset}
-          onClose={() => setShowDetail(false)}
-        />
+        <DatasetDetailModal dataset={dataset} onClose={() => setShowDetail(false)} />
       )}
     </>
   );

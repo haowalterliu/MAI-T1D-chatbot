@@ -18,7 +18,7 @@
 
 .dataset-list-empty {
   padding: var(--space-xl);
-  text-align: center;
+  text-align: left;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   background: var(--color-bg-primary);
