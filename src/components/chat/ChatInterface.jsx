@@ -3,6 +3,7 @@ import { useExperiment } from '../../context/ExperimentContext';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import DatasetRecommendation from './DatasetRecommendation';
+import ModelRecommendation from './ModelRecommendation';
 import './ChatInterface.css';
 
 function ChatInterface({ page }) {
@@ -47,6 +48,16 @@ function ChatInterface({ page }) {
               </div>
             );
           }
+          if (msg.modelRecommendations) {
+            return (
+              <div key={msg.id}>
+                <ChatMessage message={msg} />
+                {msg.modelRecommendations.map(rec => (
+                  <ModelRecommendation key={rec.id} recommendation={rec} />
+                ))}
+              </div>
+            );
+          }
           return <ChatMessage key={msg.id} message={msg} />;
         })}
         <div ref={messagesEndRef} />
@@ -59,42 +70,54 @@ function ChatInterface({ page }) {
 
 function generateAIResponse(userMessage, page, hypothesis) {
   const lowerMsg = userMessage.toLowerCase();
-  const hypothesisText = hypothesis?.trim()
-    ? hypothesis.trim()
-    : 'your research focus';
 
-  if (page === 'selection') {
-    if (lowerMsg.includes('dataset') || lowerMsg.includes('data') || lowerMsg.includes('recommend')) {
-      return {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Based on ${hypothesisText}, I recommend the following datasets:`,
-        recommendations: [
-          { id: 'hpap', reason: 'Best for beta cell analysis with comprehensive multi-omics modalities' },
-          { id: 'teddy', reason: 'Longitudinal data ideal for tracking T1D disease progression' },
-        ],
-        timestamp: new Date(),
-      };
-    }
-    if (lowerMsg.includes('model')) {
-      return {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `For ${hypothesisText}, I recommend Single Cell FM if you're studying cellular heterogeneity, Genomic FM for genome-wide association patterns, or Spatial FM when tissue architecture matters.`,
-        timestamp: new Date(),
-      };
-    }
+  // Extract hypothesis from the user's message or fall back to config
+  const hypothesisMatch = lowerMsg.match(/(?:recommend\s+(?:datasets?|a\s+model)\s+to\s+)(.+)/i);
+  const hypothesisText = hypothesisMatch
+    ? hypothesisMatch[1].trim()
+    : (hypothesis?.trim() || 'your research focus');
+
+  const wantsDataset = lowerMsg.includes('dataset') || lowerMsg.includes('data');
+  const wantsModel = lowerMsg.includes('model');
+
+  if (wantsDataset && !wantsModel) {
+    return {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `Based on your hypothesis to ${hypothesisText}, I recommend the following datasets:`,
+      recommendations: [
+        {
+          id: 'hpap',
+          reason: 'Adult T1D pancreas donors with islet-level RNA-seq — ideal for mature beta cell gene expression profiling',
+        },
+        {
+          id: 'teddy',
+          reason: 'Pediatric longitudinal cohort with RNA-seq — enables age-matched comparison of early-onset T1D progression',
+        },
+      ],
+      timestamp: new Date(),
+    };
   }
 
-  if (page === 'results') {
-    if (lowerMsg.includes('explain') || lowerMsg.includes('result') || lowerMsg.includes('finding')) {
-      return {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `INS (insulin gene) has the highest feature importance (0.23), expected in T1D research. PDX1 and MAFA are key transcription factors for beta cell identity — their high importance suggests beta cell dysfunction is a primary driver in your selected datasets.`,
-        timestamp: new Date(),
-      };
-    }
+  if (wantsModel) {
+    return {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `Based on your hypothesis to ${hypothesisText}, I recommend the following model:`,
+      modelRecommendations: [
+        { id: 'single-cell-fm' },
+      ],
+      timestamp: new Date(),
+    };
+  }
+
+  if (page === 'results' && (lowerMsg.includes('explain') || lowerMsg.includes('result') || lowerMsg.includes('finding'))) {
+    return {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `INS (insulin gene) has the highest feature importance (0.23), expected in T1D research. PDX1 and MAFA are key transcription factors for beta cell identity — their high importance suggests beta cell dysfunction is a primary driver in your selected datasets.`,
+      timestamp: new Date(),
+    };
   }
 
   return {

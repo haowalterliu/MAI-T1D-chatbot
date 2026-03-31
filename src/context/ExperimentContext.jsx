@@ -5,34 +5,11 @@ const ExperimentContext = createContext();
 
 const DEMO_HYPOTHESIS = 'Compare beta cell gene expression patterns between pediatric and adult Type 1 Diabetes patients';
 
-const DEMO_MESSAGES = [
-  {
-    id: 'demo-1',
-    role: 'user',
-    content: `Recommend datasets to ${DEMO_HYPOTHESIS.toLowerCase()}`,
-    timestamp: new Date(),
-  },
-  {
-    id: 'demo-2',
-    role: 'assistant',
-    content: `Based on your hypothesis to ${DEMO_HYPOTHESIS.toLowerCase()}, I recommend the following datasets:`,
-    recommendations: [
-      {
-        id: 'hpap',
-        reason: 'Adult T1D pancreas donors with islet-level RNA-seq — ideal for mature beta cell gene expression profiling',
-      },
-      {
-        id: 'teddy',
-        reason: 'Pediatric longitudinal cohort with RNA-seq — enables age-matched comparison of early-onset T1D progression',
-      },
-    ],
-    timestamp: new Date(),
-  },
-];
+const DEMO_MESSAGES = [];
 
 const DEMO_CONFIG = {
   hypothesis: DEMO_HYPOTHESIS,
-  selectedDatasets: ['hpap', 'teddy'],
+  selectedDatasets: [],
   selectedModelId: null,
   pipelineConfigId: null,
 };
