@@ -1,0 +1,17 @@
+.dataset-grid-container {
+  margin-bottom: var(--space-lg);
+}
+
+.dataset-grid-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.dataset-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}

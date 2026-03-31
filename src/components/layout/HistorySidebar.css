@@ -1,0 +1,96 @@
+.history-toggle-btn {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: var(--z-sidebar);
+}
+
+.history-toggle-btn:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-modal);
+}
+
+.history-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: var(--z-sidebar);
+}
+
+.history-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: var(--history-sidebar-width);
+  height: 100vh;
+  background: var(--color-bg-primary);
+  border-left: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-sidebar);
+  display: flex;
+  flex-direction: column;
+  z-index: calc(var(--z-sidebar) + 1);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.history-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.history-sidebar-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.history-sidebar-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.history-sidebar-close:hover {
+  color: var(--color-text-primary);
+}
+
+.history-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.history-sidebar-empty {
+  padding: var(--space-xl);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}

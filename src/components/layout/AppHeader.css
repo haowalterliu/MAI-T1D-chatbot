@@ -1,0 +1,157 @@
+.app-header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-shrink: 0;
+  z-index: var(--z-base);
+  position: relative;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.app-header-logo {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-blue);
+  letter-spacing: 0.05em;
+}
+
+.app-header-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--color-border-default);
+}
+
+.app-header-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-normal);
+}
+
+/* History button in header */
+.history-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.history-icon-btn:hover,
+.history-icon-btn.active {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-surface);
+}
+
+.history-icon-label {
+  font-weight: var(--font-weight-medium);
+}
+
+.history-icon-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  background: var(--color-accent-blue);
+  border-radius: 9px;
+  line-height: 1;
+}
+
+.history-icon-count:empty {
+  display: none;
+}
+
+/* History dropdown */
+.history-dropdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dropdown);
+}
+
+.history-dropdown {
+  position: fixed;
+  top: 60px;
+  right: var(--space-lg);
+  width: 280px;
+  max-height: 420px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  z-index: calc(var(--z-dropdown) + 1);
+  animation: fadeDown 0.15s ease-out;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.history-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-shrink: 0;
+}
+
+.history-dropdown-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.history-dropdown-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.history-dropdown-close:hover {
+  color: var(--color-text-primary);
+}
+
+.history-dropdown-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.history-dropdown-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,11 @@
+.selection-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.selection-panel-content {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}

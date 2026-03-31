@@ -1,0 +1,132 @@
+.visualizations {
+  padding: var(--space-lg);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-lg);
+}
+
+.visualizations-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.visualizations-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+.chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.chart-placeholder-inner {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0;
+}
+
+/* Bar chart */
+.bar-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.bar-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--color-border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--color-accent-blue);
+  border-radius: var(--radius-sm);
+  transition: width 0.4s ease;
+}
+
+.bar-value {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Heatmap */
+.heatmap {
+  width: 100%;
+}
+
+.heatmap-labels-top {
+  display: flex;
+  gap: 3px;
+  margin-left: 36px;
+  margin-bottom: 3px;
+}
+
+.heatmap-label {
+  flex: 1;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.heatmap-gene {
+  font-size: 10px;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.heatmap-cell {
+  flex: 1;
+  height: 28px;
+  border-radius: 2px;
+  cursor: default;
+}

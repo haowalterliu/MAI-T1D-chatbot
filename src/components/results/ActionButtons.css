@@ -1,0 +1,41 @@
+.action-buttons {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-bg-primary);
+  flex-shrink: 0;
+}
+
+.reset-button,
+.save-button {
+  flex: 1;
+  height: 44px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reset-button {
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+}
+
+.reset-button:hover {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-hover);
+}
+
+.save-button {
+  color: white;
+  background: var(--color-accent-blue);
+  border-color: var(--color-accent-blue);
+}
+
+.save-button:hover {
+  background: var(--color-accent-blue-hover);
+}

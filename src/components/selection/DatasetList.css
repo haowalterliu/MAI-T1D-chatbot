@@ -1,0 +1,27 @@
+.dataset-list-container {
+  margin-bottom: var(--space-lg);
+}
+
+.dataset-list-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.dataset-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.dataset-list-empty {
+  padding: var(--space-xl);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-lg);
+}

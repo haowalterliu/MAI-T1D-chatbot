@@ -1,0 +1,55 @@
+.history-entry {
+  width: 100%;
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  text-align: left;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-family);
+}
+
+.history-entry:hover {
+  border-color: var(--color-border-hover);
+}
+
+.history-entry.active {
+  background: var(--color-accent-blue);
+  border-color: var(--color-accent-blue);
+}
+
+.history-entry.active * {
+  color: white !important;
+}
+
+.history-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.history-entry-number {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.history-entry-badge {
+  font-size: 20px;
+  color: white;
+}
+
+.history-entry-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: var(--space-xs) 0;
+}
+
+.history-entry-datasets {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0;
+}

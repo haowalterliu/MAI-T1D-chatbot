@@ -1,0 +1,77 @@
+.dataset-card {
+  padding: var(--space-md);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: all 0.15s ease;
+}
+
+.dataset-card.selected {
+  border-color: var(--color-accent-blue);
+  background: var(--color-bg-surface);
+}
+
+.dataset-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.dataset-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: default;
+}
+
+.dataset-title {
+  flex: 1;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dataset-remove-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.dataset-remove-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.dataset-divider {
+  height: 1px;
+  background: var(--color-border-default);
+  margin-bottom: var(--space-sm);
+}
+
+.dataset-metadata {
+  margin-bottom: var(--space-md);
+}
+
+.dataset-meta-item {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: var(--space-xs) 0;
+}
+
+.dataset-modalities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
