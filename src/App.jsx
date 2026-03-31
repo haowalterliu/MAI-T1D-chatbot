@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ExperimentProvider } from './context/ExperimentContext';
-import OnboardingPage from './pages/OnboardingPage';
 import SelectionPage from './pages/SelectionPage';
 import ResultsPage from './pages/ResultsPage';
 import './styles/variables.css';
@@ -11,7 +10,7 @@ function App() {
     <ExperimentProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<OnboardingPage />} />
+          <Route path="/" element={<Navigate to="/selection" replace />} />
           <Route path="/selection" element={<SelectionPage />} />
           <Route path="/results" element={<ResultsPage />} />
         </Routes>
