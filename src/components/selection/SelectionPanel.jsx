@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useExperiment } from '../../context/ExperimentContext';
 import Breadcrumb from '../layout/Breadcrumb';
-import HypothesisInput from './HypothesisInput';
 import DatasetList from './DatasetList';
 import ModelSelector from './ModelSelector';
+import PipelineConfig from './PipelineConfig';
 import RunButton from './RunButton';
 import './SelectionPanel.css';
 
 function SelectionPanel() {
   const navigate = useNavigate();
-  const { config, updateConfig, runExperiment, addMessage } = useExperiment();
+  const { config, runExperiment, addMessage } = useExperiment();
 
   const handleRunExperiment = async () => {
     addMessage({
@@ -26,7 +26,6 @@ function SelectionPanel() {
   };
 
   const isRunDisabled =
-    !config.hypothesis.trim() ||
     config.selectedDatasets.length === 0 ||
     !config.selectedModelId;
 
@@ -35,14 +34,25 @@ function SelectionPanel() {
       <Breadcrumb currentPage="selection" />
 
       <div className="selection-panel-content">
-        <HypothesisInput
-          value={config.hypothesis}
-          onChange={(value) => updateConfig({ hypothesis: value })}
-        />
+        {/* Show the hypothesis as a read-only summary */}
+        {config.hypothesis && (
+          <div className="selection-hypothesis-summary">
+            <span className="selection-hypothesis-label">Hypothesis</span>
+            <p className="selection-hypothesis-text">{config.hypothesis}</p>
+            <button
+              className="selection-hypothesis-edit"
+              onClick={() => navigate('/')}
+            >
+              Edit ↗
+            </button>
+          </div>
+        )}
 
         <DatasetList />
 
         <ModelSelector />
+
+        <PipelineConfig />
 
         <RunButton
           disabled={isRunDisabled}

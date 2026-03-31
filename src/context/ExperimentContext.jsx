@@ -3,35 +3,15 @@ import { generateMockResults } from '../data/demoResults';
 
 const ExperimentContext = createContext();
 
-const DEMO_MESSAGES = [
-  {
-    id: 'demo-1',
-    role: 'user',
-    content: 'recommend datasets for T1D research',
-    timestamp: new Date(),
-  },
-  {
-    id: 'demo-2',
-    role: 'assistant',
-    content: 'Based on your research focus, I recommend the following datasets:',
-    recommendations: [
-      { id: 'hpap', reason: 'Best for beta cell analysis with comprehensive multi-omics modalities' },
-      { id: 'teddy', reason: 'Longitudinal data ideal for tracking T1D disease progression' },
-    ],
-    timestamp: new Date(),
-  },
-];
-
-const DEMO_CONFIG = {
-  hypothesis: '',
-  selectedDatasets: ['hpap', 'teddy'],
-  selectedModelId: null,
-  pipelineConfigId: null,
-};
-
 export function ExperimentProvider({ children }) {
-  const [config, setConfig] = useState(DEMO_CONFIG);
-  const [messages, setMessages] = useState(DEMO_MESSAGES);
+  const [config, setConfig] = useState({
+    hypothesis: '',
+    selectedDatasets: [],
+    selectedModelId: null,
+    pipelineConfigId: null,
+  });
+
+  const [messages, setMessages] = useState([]);
   const [history, setHistory] = useState([]);
   const [currentResultIndex, setCurrentResultIndex] = useState(null);
 
@@ -48,14 +28,14 @@ export function ExperimentProvider({ children }) {
       ...prev,
       selectedDatasets: prev.selectedDatasets.includes(datasetId)
         ? prev.selectedDatasets
-        : [...prev.selectedDatasets, datasetId]
+        : [...prev.selectedDatasets, datasetId],
     }));
   };
 
   const removeDataset = (datasetId) => {
     setConfig(prev => ({
       ...prev,
-      selectedDatasets: prev.selectedDatasets.filter(id => id !== datasetId)
+      selectedDatasets: prev.selectedDatasets.filter(id => id !== datasetId),
     }));
   };
 
