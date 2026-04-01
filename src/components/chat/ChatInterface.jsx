@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useExperiment } from '../../context/ExperimentContext';
+import { sendMessage } from '../../services/chatService';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import DatasetRecommendation from './DatasetRecommendation';
@@ -9,12 +10,14 @@ import './ChatInterface.css';
 function ChatInterface({ page }) {
   const { messages, addMessage, config } = useExperiment();
   const messagesEndRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (text) => {
+  const handleSendMessage = async (text) => {
+    // Add user message immediately
     addMessage({
       id: Date.now().toString(),
       role: 'user',
@@ -22,9 +25,35 @@ function ChatInterface({ page }) {
       timestamp: new Date(),
     });
 
-    setTimeout(() => {
-      addMessage(generateAIResponse(text, page, config.hypothesis));
-    }, 500);
+    setIsLoading(true);
+
+    try {
+      // Build conversation history for Claude (only role + content)
+      const claudeMessages = messages
+        .map(m => ({ role: m.role, content: m.content }))
+        .concat({ role: 'user', content: text });
+
+      const response = await sendMessage(claudeMessages);
+
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.content,
+        recommendations: response.recommendations,
+        modelRecommendations: response.modelRecommendations,
+        timestamp: new Date(),
+      });
+    } catch (error) {
+      console.error('Chat error:', error);
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const placeholder = page === 'selection'
@@ -34,7 +63,7 @@ function ChatInterface({ page }) {
   return (
     <div className="chat-interface">
       <div className="chat-messages">
-        {messages.length === 0 && (
+        {messages.length === 0 && !isLoading && (
           <div className="chat-empty-state">{placeholder}</div>
         )}
         {messages.map(msg => {
@@ -60,72 +89,19 @@ function ChatInterface({ page }) {
           }
           return <ChatMessage key={msg.id} message={msg} />;
         })}
+        {isLoading && (
+          <div className="chat-typing-indicator">
+            <span className="typing-dot"></span>
+            <span className="typing-dot"></span>
+            <span className="typing-dot"></span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatInput onSend={handleSendMessage} />
+      <ChatInput onSend={handleSendMessage} disabled={isLoading} />
     </div>
   );
-}
-
-function generateAIResponse(userMessage, page, hypothesis) {
-  const lowerMsg = userMessage.toLowerCase();
-
-  // Extract hypothesis from the user's message or fall back to config
-  const hypothesisMatch = lowerMsg.match(/(?:recommend\s+(?:datasets?|a\s+model)\s+to\s+)(.+)/i);
-  const hypothesisText = hypothesisMatch
-    ? hypothesisMatch[1].trim()
-    : (hypothesis?.trim() || 'your research focus');
-
-  const wantsDataset = lowerMsg.includes('dataset') || lowerMsg.includes('data');
-  const wantsModel = lowerMsg.includes('model');
-
-  if (wantsDataset && !wantsModel) {
-    return {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: `Based on your hypothesis to ${hypothesisText}, I recommend the following datasets:`,
-      recommendations: [
-        {
-          id: 'hpap',
-          reason: 'Adult T1D pancreas donors with islet-level RNA-seq — ideal for mature beta cell gene expression profiling',
-        },
-        {
-          id: 'teddy',
-          reason: 'Pediatric longitudinal cohort with RNA-seq — enables age-matched comparison of early-onset T1D progression',
-        },
-      ],
-      timestamp: new Date(),
-    };
-  }
-
-  if (wantsModel) {
-    return {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: `Based on your hypothesis to ${hypothesisText}, I recommend the following model:`,
-      modelRecommendations: [
-        { id: 'single-cell-fm' },
-      ],
-      timestamp: new Date(),
-    };
-  }
-
-  if (page === 'results' && (lowerMsg.includes('explain') || lowerMsg.includes('result') || lowerMsg.includes('finding'))) {
-    return {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: `INS (insulin gene) has the highest feature importance (0.23), expected in T1D research. PDX1 and MAFA are key transcription factors for beta cell identity — their high importance suggests beta cell dysfunction is a primary driver in your selected datasets.`,
-      timestamp: new Date(),
-    };
-  }
-
-  return {
-    id: (Date.now() + 1).toString(),
-    role: 'assistant',
-    content: 'This is a demo assistant. In production, responses are powered by the Claude API.',
-    timestamp: new Date(),
-  };
 }
 
 export default ChatInterface;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './ChatInput.css';
 
-function ChatInput({ onSend }) {
+function ChatInput({ onSend, disabled }) {
   const [input, setInput] = useState('');
 
   const handleSubmit = (e) => {
@@ -31,7 +31,7 @@ function ChatInput({ onSend }) {
       <button
         type="submit"
         className="chat-input-send-btn"
-        disabled={!input.trim()}
+        disabled={!input.trim() || disabled}
       >
         Send
       </button>
