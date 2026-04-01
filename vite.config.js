@@ -6,7 +6,10 @@ export default defineConfig(({ mode }) => {
   // Load .env file
   const env = loadEnv(mode, process.cwd(), '')
 
+  const isGHPages = mode === 'production'
+
   return {
+    base: isGHPages ? '/MAI-T1D-chatbot/' : '/',
     plugins: [
       react(),
       {
