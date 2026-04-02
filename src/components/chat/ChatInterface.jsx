@@ -5,10 +5,11 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import DatasetRecommendation from './DatasetRecommendation';
 import ModelRecommendation from './ModelRecommendation';
+import DatasetUpdateCard from './DatasetUpdateCard';
 import './ChatInterface.css';
 
 function ChatInterface({ page }) {
-  const { messages, addMessage, config } = useExperiment();
+  const { messages, addMessage, config, addTableOp } = useExperiment();
   const messagesEndRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,8 +42,16 @@ function ChatInterface({ page }) {
         content: response.content,
         recommendations: response.recommendations,
         modelRecommendations: response.modelRecommendations,
+        tableOps: response.tableOps || null,
         timestamp: new Date(),
       });
+
+      // Push table operations to context for workspace to consume
+      if (response.tableOps) {
+        for (const op of response.tableOps) {
+          addTableOp(op);
+        }
+      }
     } catch (error) {
       console.error('Chat error:', error);
       addMessage({
@@ -67,22 +76,22 @@ function ChatInterface({ page }) {
           <div className="chat-empty-state">{placeholder}</div>
         )}
         {messages.map(msg => {
-          if (msg.recommendations) {
+          const hasRecs = msg.recommendations && msg.recommendations.length > 0;
+          const hasModels = msg.modelRecommendations && msg.modelRecommendations.length > 0;
+          const hasTableOps = msg.tableOps && msg.tableOps.length > 0;
+
+          if (hasRecs || hasModels || hasTableOps) {
             return (
               <div key={msg.id}>
                 <ChatMessage message={msg} />
-                {msg.recommendations.map(rec => (
+                {hasRecs && msg.recommendations.map(rec => (
                   <DatasetRecommendation key={rec.id} recommendation={rec} />
                 ))}
-              </div>
-            );
-          }
-          if (msg.modelRecommendations) {
-            return (
-              <div key={msg.id}>
-                <ChatMessage message={msg} />
-                {msg.modelRecommendations.map(rec => (
+                {hasModels && msg.modelRecommendations.map(rec => (
                   <ModelRecommendation key={rec.id} recommendation={rec} />
+                ))}
+                {hasTableOps && msg.tableOps.map((op, i) => (
+                  <DatasetUpdateCard key={`${msg.id}-op-${i}`} op={op} messageId={msg.id} />
                 ))}
               </div>
             );

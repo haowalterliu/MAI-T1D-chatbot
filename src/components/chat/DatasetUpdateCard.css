@@ -1,0 +1,114 @@
+.dataset-update-card {
+  margin: var(--space-sm) 0;
+  padding: var(--space-md);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.15s ease;
+}
+
+.dataset-update-card:hover {
+  border-color: var(--color-text-secondary);
+}
+
+/* Header */
+.update-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.update-card-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* Update button — blue filled */
+.update-card-btn {
+  flex-shrink: 0;
+  padding: 3px var(--space-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  background: var(--color-accent-blue);
+  color: white;
+  border: 1px solid var(--color-accent-blue);
+}
+
+.update-card-btn:hover:not(.updated) {
+  background: var(--color-accent-blue-hover);
+  border-color: var(--color-accent-blue-hover);
+}
+
+/* ✓ Updated — outline style */
+.update-card-btn.updated {
+  background: transparent;
+  color: var(--color-accent-blue);
+  border: 1px solid var(--color-accent-blue);
+  cursor: default;
+  opacity: 0.75;
+}
+
+/* Donor count */
+.update-card-donor-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 2px 0;
+}
+
+/* Meta row */
+.update-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+/* Change indicator */
+.update-card-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.change-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+}
+
+.change-badge.remove {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.change-badge.add {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+
+.change-label {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}

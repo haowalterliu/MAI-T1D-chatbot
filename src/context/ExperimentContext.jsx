@@ -19,6 +19,36 @@ export function ExperimentProvider({ children }) {
   const [messages, setMessages] = useState(DEMO_MESSAGES);
   const [history, setHistory] = useState([]);
   const [currentResultIndex, setCurrentResultIndex] = useState(null);
+  // Pending table operations from AI chat (add/remove rows)
+  const [pendingTableOps, setPendingTableOps] = useState([]);
+  // Per-dataset table state (persists across layout switches)
+  const [tableStates, setTableStates] = useState({});
+  const [tableHistories, setTableHistories] = useState({});
+  // Per-dataset committed data overrides (after "Update Dataset")
+  const [committedData, setCommittedData] = useState({});
+  // External update trigger (from chat card "Update" button)
+  const [updateTrigger, setUpdateTrigger] = useState(null);
+
+  const triggerUpdate = (datasetId) => {
+    setUpdateTrigger({ datasetId, ts: Date.now() });
+  };
+
+  const consumeUpdateTrigger = () => {
+    const trigger = updateTrigger;
+    setUpdateTrigger(null);
+    return trigger;
+  };
+
+  const addTableOp = (op) => {
+    // op: { type: 'add_rows' | 'remove_rows', datasetId, rows: [...] }
+    setPendingTableOps(prev => [...prev, op]);
+  };
+
+  const consumeTableOps = () => {
+    const ops = [...pendingTableOps];
+    setPendingTableOps([]);
+    return ops;
+  };
 
   const addMessage = (message) => {
     setMessages(prev => [...prev, message]);
@@ -76,6 +106,18 @@ export function ExperimentProvider({ children }) {
     currentResultIndex,
     runExperiment,
     viewHistoryResult,
+    pendingTableOps,
+    addTableOp,
+    consumeTableOps,
+    tableStates,
+    setTableStates,
+    tableHistories,
+    setTableHistories,
+    committedData,
+    setCommittedData,
+    updateTrigger,
+    triggerUpdate,
+    consumeUpdateTrigger,
   };
 
   return (

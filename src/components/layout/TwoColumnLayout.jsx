@@ -3,7 +3,7 @@ import './TwoColumnLayout.css';
 
 const MIN_PCT = 20;  // minimum panel width %
 const MAX_PCT = 80;  // maximum panel width %
-const DEFAULT_PCT = 60; // default left panel %
+const DEFAULT_PCT = 40; // default left panel %
 
 function TwoColumnLayout({ leftPanel, rightPanel }) {
   const [leftPct, setLeftPct] = useState(DEFAULT_PCT);

@@ -1,0 +1,45 @@
+.dataset-table-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.dth-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.dth-separator {
+  color: var(--color-text-secondary);
+}
+
+.dth-stat {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.dth-chip {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.dth-tag {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}

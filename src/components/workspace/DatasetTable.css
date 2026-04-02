@@ -1,0 +1,187 @@
+.dataset-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.dataset-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  table-layout: auto;
+  min-width: 900px;
+}
+
+/* Header */
+.dataset-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.dataset-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-default);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dataset-table th:hover {
+  color: var(--color-text-primary);
+}
+
+.dataset-table th.sorted {
+  color: var(--color-accent-blue);
+}
+
+.th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.th-sort-icon {
+  font-size: 10px;
+  color: var(--color-accent-blue);
+}
+
+/* Body */
+.dataset-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.dataset-table tbody tr:hover:not(.row-deleted) {
+  background: var(--color-bg-surface);
+}
+
+/* Checkbox column */
+.col-checkbox {
+  width: 36px;
+  min-width: 36px;
+  text-align: center;
+  padding-left: 12px !important;
+  padding-right: 4px !important;
+}
+
+.col-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--color-accent-blue);
+}
+
+/* Sticky columns */
+.sticky-col-1 {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: inherit;
+}
+
+.sticky-col-2 {
+  position: sticky;
+  left: 36px;
+  z-index: 2;
+  background: inherit;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Inherit background correctly for sticky cells */
+.dataset-table thead .sticky-col-1,
+.dataset-table thead .sticky-col-2 {
+  background: var(--color-bg-surface);
+  z-index: 4;
+}
+
+.dataset-table tbody tr .sticky-col-1,
+.dataset-table tbody tr .sticky-col-2 {
+  background: var(--color-bg-primary);
+}
+
+.dataset-table tbody tr:hover:not(.row-deleted) .sticky-col-1,
+.dataset-table tbody tr:hover:not(.row-deleted) .sticky-col-2 {
+  background: var(--color-bg-surface);
+}
+
+/* Selected row */
+.row-selected {
+  background: #EBF5FF !important;
+}
+
+.row-selected .sticky-col-1,
+.row-selected .sticky-col-2 {
+  background: #EBF5FF !important;
+}
+
+/* Added row (green) */
+.row-added {
+  background: #F0FDF4 !important;
+}
+
+.row-added .sticky-col-1,
+.row-added .sticky-col-2 {
+  background: #F0FDF4 !important;
+}
+
+.row-added td:first-child::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #22C55E;
+}
+
+.row-added .col-checkbox {
+  position: relative;
+}
+
+/* Deleted row */
+.row-deleted {
+  background: #FEE2E2 !important;
+}
+
+.row-deleted .sticky-col-1,
+.row-deleted .sticky-col-2 {
+  background: #FEE2E2 !important;
+}
+
+.row-deleted td {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.row-deleted .col-checkbox {
+  text-decoration: none;
+  opacity: 1;
+}
+
+.deleted-icon {
+  color: #DC2626;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Empty */
+.table-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
