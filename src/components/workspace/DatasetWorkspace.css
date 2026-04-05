@@ -51,6 +51,7 @@
 }
 
 .workspace-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -65,24 +66,62 @@
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
   margin-bottom: 0;
+  /* Hard cap so long variant titles get truncated with an ellipsis. */
+  max-width: 260px;
 }
 
-.workspace-tab-variant {
-  display: inline-block;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: 8px;
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-xs);
+/* Truncated tab label — the full title lives in the hover tooltip below. */
+.workspace-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Hover card: shows full tab title + donor count. Hidden by default,
+   revealed on hover/focus. Positioned below the tab. */
+.workspace-tab-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: max-content;
+  max-width: 340px;
+  padding: 8px 12px;
+  background: var(--color-bg-tooltip, #1a1a2e);
+  color: var(--color-text-tooltip, #e0e0e0);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
   font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
   text-transform: none;
-  letter-spacing: 0.01em;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: var(--z-dropdown, 100);
+}
+
+.workspace-tab:hover .workspace-tab-tooltip,
+.workspace-tab:focus-visible .workspace-tab-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.workspace-tab-tooltip-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: inherit;
   white-space: nowrap;
 }
-.workspace-tab.active .workspace-tab-variant {
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
+
+.workspace-tab-tooltip-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  opacity: 0.85;
 }
 
 .workspace-tab:hover {
@@ -285,6 +324,14 @@
 
 .confirm-btn:hover {
   background: var(--color-accent-blue-hover);
+}
+
+.confirm-btn.confirm-btn-danger {
+  background: #DC2626;
+}
+
+.confirm-btn.confirm-btn-danger:hover {
+  background: #B91C1C;
 }
 
 /* Body */

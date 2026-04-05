@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { useExperiment } from '../../context/ExperimentContext';
 import { demoDatasets } from '../../data/demoDatasets';
 import Tag from '../common/Tag';
-import DatasetDetailModal from './DatasetDetailModal';
 import './DatasetRecommendation.css';
 
 function DatasetRecommendation({ recommendation }) {
   const { config, addDataset, addDatasetVariant } = useExperiment();
-  const [showDetail, setShowDetail] = useState(false);
 
   // A recommendation can be either a plain base dataset or a filtered
   // variant. When it carries a `variant` object, the card shows the
@@ -20,6 +17,12 @@ function DatasetRecommendation({ recommendation }) {
 
   const isVariant = !!recommendation.variant;
   const isAdded = config.selectedDatasets.includes(dataset.id);
+
+  // "Best for" is a static per-base-dataset descriptor. Variant cards share
+  // the base dataset's descriptor since they're subsets of the same cohort.
+  const baseId = isVariant ? (dataset.baseId || recommendation.id) : dataset.id;
+  const baseDataset = demoDatasets.find(d => d.id === baseId);
+  const bestFor = baseDataset?.bestFor;
 
   // Card title = the full dataset/variant title (e.g. "HPAP — T1D with
   // scRNA-seq + CODEX" for variants, or "HPAP: Human Pancreas…" for base
@@ -75,17 +78,12 @@ function DatasetRecommendation({ recommendation }) {
           <p className="rec-reason">{recommendation.reason}</p>
         )}
 
-        <button
-          className="rec-view-details"
-          onClick={() => setShowDetail(true)}
-        >
-          View details
-        </button>
+        {bestFor && (
+          <p className="rec-best-for">
+            <span className="rec-best-for-label">Best for:</span> {bestFor}
+          </p>
+        )}
       </div>
-
-      {showDetail && (
-        <DatasetDetailModal dataset={dataset} onClose={() => setShowDetail(false)} />
-      )}
     </>
   );
 }

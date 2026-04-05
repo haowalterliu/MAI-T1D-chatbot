@@ -65,11 +65,14 @@
   background: var(--color-bg-surface);
 }
 
-/* Checkbox column */
+/* Checkbox column — left-align so the header "select all" checkbox sits at
+   the same x-position as every row checkbox below it. (Previously the header
+   th won text-align:left from the generic `.dataset-table th` rule, while the
+   body td inherited center from here → visible misalignment.) */
 .col-checkbox {
   width: 36px;
   min-width: 36px;
-  text-align: center;
+  text-align: left;
   padding-left: 12px !important;
   padding-right: 4px !important;
 }

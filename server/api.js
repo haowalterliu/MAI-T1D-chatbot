@@ -79,6 +79,10 @@ export async function runAgent(body, emit = () => {}) {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
+      // Keep sampling low so the response template (overview → bullets →
+      // cards) stays stable across runs. 0.2 (not 0) leaves a sliver of
+      // flexibility for tool-use decisions while eliminating prose drift.
+      temperature: 0.2,
       system: SYSTEM_PROMPT,
       tools: toolDefinitions,
       messages,

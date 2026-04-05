@@ -93,12 +93,40 @@ export function ExperimentProvider({ children }) {
     return datasetVariants[id] || demoDatasets.find(d => d.id === id);
   }, [datasetVariants]);
 
-  const removeDataset = (datasetId) => {
+  // Remove a dataset/variant completely: drop from selection, forget its
+  // table state, undo history, committed-data override, and (for variants)
+  // its synthetic registration. The corresponding chat card's "+ Add" button
+  // auto-resets because it reads from config.selectedDatasets.
+  const removeDataset = useCallback((datasetId) => {
     setConfig(prev => ({
       ...prev,
       selectedDatasets: prev.selectedDatasets.filter(id => id !== datasetId),
     }));
-  };
+    setTableStates(prev => {
+      if (!(datasetId in prev)) return prev;
+      const next = { ...prev };
+      delete next[datasetId];
+      return next;
+    });
+    setTableHistories(prev => {
+      if (!(datasetId in prev)) return prev;
+      const next = { ...prev };
+      delete next[datasetId];
+      return next;
+    });
+    setCommittedData(prev => {
+      if (!(datasetId in prev)) return prev;
+      const next = { ...prev };
+      delete next[datasetId];
+      return next;
+    });
+    setDatasetVariants(prev => {
+      if (!(datasetId in prev)) return prev;
+      const next = { ...prev };
+      delete next[datasetId];
+      return next;
+    });
+  }, []);
 
   const runExperiment = () => {
     const newResult = {

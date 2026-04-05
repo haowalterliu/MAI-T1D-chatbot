@@ -1,5 +1,21 @@
 import { hpapRealData } from './hpapRealData';
 
+// Shorten verbose stage strings like
+//   "Stage 3: One or more autoantibodies and diagnostic hyperglycemia or T1D diagnosis"
+// down to just "Stage 3" for compact table display.
+function shortenStage(value) {
+  if (!value || typeof value !== 'string') return value;
+  const m = value.match(/^\s*(stage\s*\d)\b/i);
+  if (!m) return value;
+  return m[1].replace(/^\s*stage/i, 'Stage').replace(/\s+/, ' ');
+}
+
+const hpapRealDataDisplay = hpapRealData.map((row) => ({
+  ...row,
+  'T1D stage': shortenStage(row['T1D stage']),
+  'T1D stage.1': shortenStage(row['T1D stage.1']),
+}));
+
 // Default schema (used by TEDDY/ImmPort/TrialNet mock datasets)
 const DEFAULT_COLUMNS = [
   { key: 'donorId', label: 'Donor ID' },
@@ -67,6 +83,7 @@ export const demoDatasets = [
     modalities: ['scRNA-seq', 'scATAC-seq', 'Bulk RNA-seq', 'WGS', 'CITE-seq', 'CODEX', 'IMC', 'Flow Cytometry', 'Histology'],
     cellType: 'Islet cells',
     description: 'Human Pancreas Analysis Program — comprehensive multi-omics profiling of islet cells from 194 real donors (T1D, T2D, ND), with 17 assay modalities per donor.',
+    bestFor: 'Islet-level multi-omics and spatial studies of established T1D in pancreatic tissue.',
     keyInfo: [
       { label: 'Age', value: '1–65 yrs' },
       { label: 'Donors', value: '194' },
@@ -85,7 +102,7 @@ export const demoDatasets = [
     },
     idKey: 'donor_ID',
     columns: HPAP_COLUMNS,
-    sampleData: hpapRealData,
+    sampleData: hpapRealDataDisplay,
   },
   {
     id: 'teddy',
@@ -97,6 +114,7 @@ export const demoDatasets = [
     modalities: ['RNA-seq'],
     cellType: 'Blood samples',
     description: 'Longitudinal data ideal for tracking T1D disease progression',
+    bestFor: 'Pediatric longitudinal follow-up and early autoantibody / disease-progression studies.',
     keyInfo: [
       { label: 'Age', value: '4–10 yrs' },
     ],
@@ -136,6 +154,7 @@ export const demoDatasets = [
     modalities: ['CyTOF', 'Flow Cytometry'],
     cellType: 'PBMCs',
     description: 'Large-scale immunology data repository with deep immune phenotyping for T1D studies',
+    bestFor: 'Peripheral immune phenotyping and cross-cohort immunology meta-analyses.',
     keyInfo: [
       { label: 'Age', value: '5–65 yrs' },
       { label: 'Clinical Dx', value: 'T1D, At-risk, Control' },
@@ -174,6 +193,7 @@ export const demoDatasets = [
     modalities: ['scRNA-seq', 'CyTOF'],
     cellType: 'PBMCs',
     description: 'Longitudinal screening and prevention trial data for T1D-risk relatives',
+    bestFor: 'Pre-symptomatic and at-risk relative studies — Stage 1–2 natural history and prevention.',
     keyInfo: [
       { label: 'Age', value: '3–55 yrs' },
       { label: 'Clinical Dx', value: 'At-risk, T1D' },

@@ -127,19 +127,16 @@
   margin: 0 0 var(--space-sm) 0;
 }
 
-.rec-view-details {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: var(--font-family);
+/* Static per-dataset "Best for" descriptor — replaces the old View details
+   link. Lives below tags (and optional reason), styled as muted small text. */
+.rec-best-for {
+  margin: 0;
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
 }
 
-.rec-view-details:hover {
-  color: var(--color-accent-blue);
+.rec-best-for-label {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }

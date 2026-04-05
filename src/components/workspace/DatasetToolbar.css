@@ -17,6 +17,13 @@
 .toolbar-right {
   display: flex;
   align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Secondary toolbar buttons on the right side (Delete Dataset, Download).
+   Reuse .toolbar-btn so they visually match Filter/Sort on the left. */
+.toolbar-btn.toolbar-secondary {
+  padding: 0 12px;
 }
 
 /* Buttons — shared sizing so every toolbar button has the same height */
@@ -58,16 +65,6 @@
   border-color: var(--color-accent-blue);
   color: var(--color-accent-blue);
   background: #EBF5FF;
-}
-
-.toolbar-btn.delete-btn {
-  border-color: #FCA5A5;
-  color: #DC2626;
-  background: #FEF2F2;
-}
-
-.toolbar-btn.delete-btn:hover {
-  background: #FEE2E2;
 }
 
 /* Icon-only buttons (undo/redo) */

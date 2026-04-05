@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useExperiment } from '../../context/ExperimentContext';
 import { demoDatasets } from '../../data/demoDatasets';
 import { demoModels } from '../../data/demoModels';
-import DatasetTableHeader from './DatasetTableHeader';
 import DatasetToolbar from './DatasetToolbar';
 import DatasetTable from './DatasetTable';
+import DatasetTableHeader from './DatasetTableHeader';
 import './DatasetWorkspace.css';
 
 const DEFAULT_TABLE_COLUMNS = [
@@ -66,7 +66,7 @@ function DatasetWorkspace({ onExperimentStart }) {
     config, updateConfig, runExperiment, addMessage, pendingTableOps, consumeTableOps,
     tableStates, setTableStates, tableHistories: histories, setTableHistories: setHistories,
     committedData, setCommittedData, updateTrigger, consumeUpdateTrigger,
-    getDataset,
+    getDataset, removeDataset,
   } = useExperiment();
   const selectedDatasets = config.selectedDatasets;
 
@@ -387,6 +387,25 @@ function DatasetWorkspace({ onExperimentStart }) {
     performUpdate(activeTabId);
   };
 
+  // Delete the currently-active dataset from the workspace. This also wipes
+  // its table state, history, committed overrides, and (for variants) its
+  // synthetic registration — handled inside ExperimentContext.removeDataset.
+  // The chat card's "✓ Added" button auto-resets because it reads from
+  // config.selectedDatasets, which no longer contains this id.
+  const handleDeleteDataset = useCallback(() => {
+    if (!activeTabId) return;
+    const ds = getDataset(activeTabId);
+    const title = ds?.title || 'dataset';
+    removeDataset(activeTabId);
+    setShowDeleteConfirm(false);
+    addMessage({
+      id: Date.now().toString(),
+      role: 'system',
+      content: `Removed ${title} from the workspace.`,
+      timestamp: new Date(),
+    });
+  }, [activeTabId, getDataset, removeDataset, addMessage]);
+
   // Download the current (processed) table as a CSV file
   const handleDownloadCsv = useCallback(() => {
     if (!activeDataset) return;
@@ -440,6 +459,7 @@ function DatasetWorkspace({ onExperimentStart }) {
   };
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [experimentStarted, setExperimentStarted] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [hoveredModelId, setHoveredModelId] = useState(null);
@@ -497,20 +517,24 @@ function DatasetWorkspace({ onExperimentStart }) {
             // For variant datasets, show the base name + a compact filter
             // label pill so multiple filtered sub-cohorts of the same base
             // are distinguishable at a glance (e.g. "HPAP  [Stage 1 · Male]").
-            const base = ds.isVariant ? demoDatasets.find(d => d.id === ds.baseId) : null;
-            const baseName = base ? base.title.split(':')[0].trim() : ds.title;
-            const variantTags = ds.isVariant ? filterTagLabels(ds.variantFilters) : [];
+            // Tab title = single combined string.
+            //   Variant: use the full variant title (e.g. "HPAP — T1D IAA-Positive").
+            //   Non-variant: strip any colon suffix from the base title.
+            const tabTitle = ds.isVariant
+              ? (ds.title || '')
+              : (ds.title || '').split(':')[0].trim();
             return (
               <button
                 key={id}
                 className={`workspace-tab ${activeTabId === id ? 'active' : ''}`}
                 onClick={() => setActiveTabId(id)}
               >
-                <span className="workspace-tab-name">{baseName}</span>
-                {variantTags.map((t, i) => (
-                  <span key={i} className="workspace-tab-variant">{t}</span>
-                ))}
+                <span className="workspace-tab-name">{tabTitle}</span>
                 {hasPendingChanges && <span className="tab-update-dot" />}
+                <span className="workspace-tab-tooltip" role="tooltip">
+                  <span className="workspace-tab-tooltip-title">{tabTitle}</span>
+                  <span className="workspace-tab-tooltip-count">{ds.donorCount} donors</span>
+                </span>
               </button>
             );
           })}
@@ -562,7 +586,12 @@ function DatasetWorkspace({ onExperimentStart }) {
 
       {activeDataset && (
         <div className="workspace-body">
-          <DatasetTableHeader dataset={activeDataset} />
+          <DatasetTableHeader
+            dataset={activeDataset}
+            donorCount={processedData.filter(
+              r => !activeState.deletedRows.has(r[activeIdKey])
+            ).length}
+          />
           <DatasetToolbar
             columns={activeColumns}
             sortConfig={activeState.sortConfig}
@@ -578,6 +607,7 @@ function DatasetWorkspace({ onExperimentStart }) {
             onRedo={handleRedo}
             onSelectAndUpdate={handleSelectAndUpdate}
             onDownloadCsv={handleDownloadCsv}
+            onDeleteDataset={() => setShowDeleteConfirm(true)}
           />
           <DatasetTable
             data={processedData}
@@ -591,6 +621,25 @@ function DatasetWorkspace({ onExperimentStart }) {
             onSelectAll={handleSelectAll}
             onSort={handleSort}
           />
+        </div>
+      )}
+      {showDeleteConfirm && (
+        <div className="confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
+            <h3 className="confirm-title">Delete Dataset</h3>
+            <p className="confirm-text">
+              Remove {activeDataset?.title || 'this dataset'} from the workspace?
+              Any unsaved table edits will be discarded.
+            </p>
+            <div className="confirm-actions">
+              <button className="confirm-cancel" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+              <button className="confirm-btn confirm-btn-danger" onClick={handleDeleteDataset}>
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {showConfirmDialog && (

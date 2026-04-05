@@ -284,29 +284,64 @@ function parseResponse(text) {
   };
 }
 
+// Defensive filters for the optional note-line above each [DATASET:...] marker.
+// The system prompt already enforces these rules, but we strip any accidental
+// drift (LLM temperature is 0.2, not 0) so the card UI stays consistent.
+const COUNT_RECAP_RE = /^(?:\d+|all \d+|a total of \d+)\s+(?:donors?|samples?)\s+(?:with|in|from|matching)\b[^.]*\.?\s*$/i;
+const BANNED_PHRASES_RE = /\b(?:ideal for[^.]*|makes it (?:ideal|suitable|perfect)[^.]*|provides comprehensive[^.]*|enables [a-z ]+ studies[^.]*|perfect for[^.]*)\.?/gi;
+const NOTE_MAX_LEN = 160;
+
 /**
- * Extract the reason text for a recommendation from the text before its marker.
+ * Extract the optional note/caveat line directly above a [DATASET:...] marker.
+ *
+ * The note is an *optional* sentence per the system prompt: if Claude didn't
+ * write one (e.g. the line right above the marker is a bullet, heading, or
+ * empty), we return '' and the card renders without a rec-reason paragraph.
+ *
+ * We only look at the ONE line immediately before the marker, then:
+ *   1. Reject bullets, headings, other markers → no note.
+ *   2. Reject pure count-recap sentences ("2 donors with Stage 1...") — the
+ *      card UI already shows title + count + tags, so recaps are useless.
+ *   3. Strip banned rationale phrases ("ideal for", "makes it suitable", ...).
+ *   4. Keep only the first sentence.
+ *   5. Clamp to NOTE_MAX_LEN characters.
  */
-function extractReason(textBefore, title) {
-  const lines = textBefore.split('\n').filter(l => l.trim());
-  if (lines.length === 0) return '';
-
-  let reason = '';
+function extractReason(textBefore /*, title */) {
+  const lines = textBefore.split('\n');
+  // Walk backward to the last non-empty line.
+  let raw = '';
   for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line || line.startsWith('#')) break;
-    if (line.includes('[DATASET:') || line.includes('[MODEL:')) break;
+    const t = lines[i].trim();
+    if (t) { raw = t; break; }
+  }
+  if (!raw) return '';
 
-    reason = line + (reason ? ' ' + reason : '');
+  // Reject structural lines — these are not notes.
+  if (raw.startsWith('#')) return '';
+  if (raw.startsWith('-') || raw.startsWith('*') || /^\d+\./.test(raw)) return '';
+  if (raw.includes('[DATASET:') || raw.includes('[MODEL:')) return '';
 
-    if (line.startsWith('-') || line.startsWith('*') || line.startsWith('**') || /^\d+\./.test(line)) break;
+  let note = raw
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // unwrap bold
+    .replace(/^[—–]\s*/, '')            // leading em-dash
+    .trim();
+
+  // Strip banned rationale phrases.
+  note = note.replace(BANNED_PHRASES_RE, '').replace(/\s+/g, ' ').trim();
+
+  // Reject pure count recaps ("2 donors with Stage 1 and Male.").
+  if (COUNT_RECAP_RE.test(note)) return '';
+
+  // Keep only the first sentence (split on ., 。, !, ?).
+  const sentMatch = note.match(/^[^.!?。]+[.!?。]?/);
+  if (sentMatch) note = sentMatch[0].trim();
+
+  // Clamp length.
+  if (note.length > NOTE_MAX_LEN) {
+    note = note.slice(0, NOTE_MAX_LEN - 1).trimEnd() + '…';
   }
 
-  return reason
-    .replace(/\*\*[^*]+\*\*/g, '')
-    .replace(/^[-*\d.]+\s*/, '')
-    .replace(/[—–]\s*/, '')
-    .trim();
+  return note;
 }
 
 /**
