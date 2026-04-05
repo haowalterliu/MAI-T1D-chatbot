@@ -26,27 +26,32 @@ export default defineConfig(({ mode }) => {
               body += chunk
             }
 
+            // Stream events back as Server-Sent Events. The frontend reads these
+            // as they arrive so the chain-of-thoughts UI can update live.
+            res.setHeader('Content-Type', 'text/event-stream')
+            res.setHeader('Cache-Control', 'no-cache, no-transform')
+            res.setHeader('Connection', 'keep-alive')
+            res.setHeader('X-Accel-Buffering', 'no')
+            res.statusCode = 200
+
+            const emit = (event) => {
+              res.write(`data: ${JSON.stringify(event)}\n\n`)
+            }
+
             try {
               const parsed = JSON.parse(body)
-
-              // Set API key in process.env for the handler
               process.env.ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY
-
-              // Dynamic import to avoid top-level await issues
-              const { handleChatRequest } = await import('./server/api.js')
-              const result = await handleChatRequest(parsed)
-
-              res.setHeader('Content-Type', 'application/json')
-              res.statusCode = 200
-              res.end(JSON.stringify(result))
+              const { runAgent } = await import('./server/api.js')
+              await runAgent(parsed, emit)
+              res.end()
             } catch (err) {
               console.error('API Error:', err)
-              res.setHeader('Content-Type', 'application/json')
-              res.statusCode = 500
-              res.end(JSON.stringify({
+              emit({
+                type: 'error',
                 error: err.message || 'Internal server error',
                 content: 'Sorry, I encountered an error connecting to the AI service. Please try again.',
-              }))
+              })
+              res.end()
             }
           })
         },

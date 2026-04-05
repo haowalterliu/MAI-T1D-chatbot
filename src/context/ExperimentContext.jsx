@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { generateMockResults } from '../data/demoResults';
+import { demoDatasets } from '../data/demoDatasets';
 
 const ExperimentContext = createContext();
 
@@ -28,6 +29,9 @@ export function ExperimentProvider({ children }) {
   const [committedData, setCommittedData] = useState({});
   // External update trigger (from chat card "Update" button)
   const [updateTrigger, setUpdateTrigger] = useState(null);
+  // Synthetic filtered sub-datasets (e.g. "HPAP — T1D Stage 1 Male") spawned
+  // by AI recommendations. Stored as a map: { [variantId]: DatasetObject }.
+  const [datasetVariants, setDatasetVariants] = useState({});
 
   const triggerUpdate = (datasetId) => {
     setUpdateTrigger({ datasetId, ts: Date.now() });
@@ -67,6 +71,28 @@ export function ExperimentProvider({ children }) {
     }));
   };
 
+  // Register a variant dataset (e.g. an AI-filtered sub-cohort) and select it.
+  // The variant must already be a complete dataset shape with id, title,
+  // sampleData, donorCount, columns, idKey, etc.
+  const addDatasetVariant = useCallback((variant) => {
+    if (!variant?.id) return;
+    setDatasetVariants(prev => ({ ...prev, [variant.id]: variant }));
+    setConfig(prev => ({
+      ...prev,
+      selectedDatasets: prev.selectedDatasets.includes(variant.id)
+        ? prev.selectedDatasets
+        : [...prev.selectedDatasets, variant.id],
+    }));
+  }, []);
+
+  // Unified lookup — checks variants first, then falls back to the canonical
+  // demoDatasets catalog. All workspace components should use this so they
+  // can render AI-spawned filtered sub-datasets transparently.
+  const getDataset = useCallback((id) => {
+    if (!id) return undefined;
+    return datasetVariants[id] || demoDatasets.find(d => d.id === id);
+  }, [datasetVariants]);
+
   const removeDataset = (datasetId) => {
     setConfig(prev => ({
       ...prev,
@@ -99,6 +125,9 @@ export function ExperimentProvider({ children }) {
     config,
     updateConfig,
     addDataset,
+    addDatasetVariant,
+    getDataset,
+    datasetVariants,
     removeDataset,
     messages,
     addMessage,

@@ -1,24 +1,21 @@
 // Demo data — same data used by the frontend, duplicated here for server-side access
 // Includes sampleData rows for individual donor-level filtering
+//
+// HPAP: real 194-donor data imported from the frontend data module (generated from
+// HPAP Metadata.xlsx). Other datasets are still mock placeholders.
+
+import { hpapRealData } from '../src/data/hpapRealData.js';
+
+// Per-dataset ID column (HPAP uses the real Excel column name `donor_ID`).
+const datasetIdKey = {
+  hpap: 'donor_ID',
+  teddy: 'donorId',
+  immport: 'donorId',
+  trialnet: 'donorId',
+};
 
 const demoSampleData = {
-  hpap: [
-    { donorId: 'HPAP-001', age: 45, sex: 'M', bmi: 28.3, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 3', diseaseStatus: 'AAb+', diseaseDuration: '5 yrs', autoAntibody: 'GADA, IA-2', autoAntibodyPositive: 2, cellType: 'Islet cells' },
-    { donorId: 'HPAP-002', age: 52, sex: 'F', bmi: 31.1, clinicalDiagnosis: 'Non-diabetic', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-003', age: 38, sex: 'M', bmi: 24.7, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 2', diseaseStatus: 'AAb+', diseaseDuration: '3 yrs', autoAntibody: 'GADA, ZnT8', autoAntibodyPositive: 2, cellType: 'Islet cells' },
-    { donorId: 'HPAP-004', age: 61, sex: 'F', bmi: 29.8, clinicalDiagnosis: 'T2D', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-005', age: 29, sex: 'M', bmi: 22.4, clinicalDiagnosis: 'Non-diabetic', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-006', age: 47, sex: 'F', bmi: 33.2, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 3', diseaseStatus: 'AAb+', diseaseDuration: '12 yrs', autoAntibody: 'GADA, IA-2, IAA, ZnT8', autoAntibodyPositive: 4, cellType: 'Islet cells' },
-    { donorId: 'HPAP-007', age: 55, sex: 'M', bmi: 27.6, clinicalDiagnosis: 'Non-diabetic', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-008', age: 42, sex: 'F', bmi: 30.5, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 1', diseaseStatus: 'AAb+', diseaseDuration: '1 yr', autoAntibody: 'IAA', autoAntibodyPositive: 1, cellType: 'Islet cells' },
-    { donorId: 'HPAP-009', age: 33, sex: 'M', bmi: 25.1, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 2', diseaseStatus: 'AAb+', diseaseDuration: '2 yrs', autoAntibody: 'GADA, IAA', autoAntibodyPositive: 2, cellType: 'Islet cells' },
-    { donorId: 'HPAP-010', age: 68, sex: 'F', bmi: 26.9, clinicalDiagnosis: 'T2D', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-011', age: 24, sex: 'M', bmi: 21.8, clinicalDiagnosis: 'Non-diabetic', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-012', age: 50, sex: 'F', bmi: 34.7, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 3', diseaseStatus: 'AAb+', diseaseDuration: '18 yrs', autoAntibody: 'GADA, IA-2, ZnT8', autoAntibodyPositive: 3, cellType: 'Islet cells' },
-    { donorId: 'HPAP-013', age: 36, sex: 'M', bmi: 23.5, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 1', diseaseStatus: 'AAb+', diseaseDuration: '6 mo', autoAntibody: 'GADA', autoAntibodyPositive: 1, cellType: 'Islet cells' },
-    { donorId: 'HPAP-014', age: 73, sex: 'F', bmi: 28.0, clinicalDiagnosis: 'Non-diabetic', t1dStage: '—', diseaseStatus: 'AAb−', diseaseDuration: '—', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Islet cells' },
-    { donorId: 'HPAP-015', age: 19, sex: 'M', bmi: 20.3, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 2', diseaseStatus: 'AAb+', diseaseDuration: '1 yr', autoAntibody: 'GADA, IAA', autoAntibodyPositive: 2, cellType: 'Islet cells' },
-  ],
+  hpap: hpapRealData,
   teddy: [
     { donorId: 'TEDDY-001', age: 8, sex: 'M', bmi: 18.2, clinicalDiagnosis: 'At-risk', t1dStage: 'Stage 1', diseaseStatus: 'AAb+', diseaseDuration: '36 mo', autoAntibody: 'GADA', autoAntibodyPositive: 1, cellType: 'Blood samples' },
     { donorId: 'TEDDY-002', age: 5, sex: 'F', bmi: 15.4, clinicalDiagnosis: 'At-risk', t1dStage: 'Stage 0', diseaseStatus: 'AAb−', diseaseDuration: '24 mo', autoAntibody: '—', autoAntibodyPositive: 0, cellType: 'Blood samples' },
@@ -63,22 +60,22 @@ const demoDatasets = [
   {
     id: 'hpap',
     title: 'HPAP',
-    donorCount: 194,
+    donorCount: hpapRealData.length,
     donorType: 'Pancreas donors',
-    modalities: ['RNA-seq'],
+    modalities: ['scRNA-seq', 'scATAC-seq', 'Bulk RNA-seq', 'WGS', 'CITE-seq', 'CODEX', 'IMC', 'Flow Cytometry', 'Histology'],
     cellType: 'Islet cells',
-    description: 'Best for beta cell analysis with comprehensive multi-omics modalities',
-    keyInfo: [{ label: 'Age', value: '18–76 yrs' }],
+    description: 'Human Pancreas Analysis Program — real 194-donor cohort with comprehensive multi-omics (scRNA-seq, scATAC-seq, CITE-seq, CODEX, IMC, WGS, Flow Cytometry, etc.). Best for beta cell and islet-level analyses.',
+    keyInfo: [{ label: 'Age', value: '1.08–65.0 yrs' }],
     metadata: {
-      ageRange: '18–76 yrs',
-      sex: '103M / 91F',
-      bmiRange: '16.0–51.5',
-      clinicalDiagnosis: 'T1D, Non-diabetic, T2D',
-      t1dStage: 'Stage 1–3',
-      diseaseStatus: 'AAb+',
-      diseaseDuration: '0–30 yrs',
-      autoAntibody: 'GADA, IA-2, IAA, ZnT8',
-      autoAntibodyPositive: '4',
+      ageRange: '1.08–65.0 yrs',
+      sex: '101 Male / 92 Female / 1 Unknown',
+      bmiRange: '12.0–45.49',
+      clinicalDiagnosis: 'ND (94), T2DM (49), T1DM (38), T1DM Medalist, Other, AAb+',
+      t1dStage: 'Stage 1–3 (for T1D/AAb+ donors)',
+      diseaseStatus: 'T1DM, T2DM, ND, AAb+',
+      diseaseDuration: '0–60+ yrs (where applicable)',
+      autoAntibody: 'GADA, IA-2, IAA, ZnT8 (individual 0/1 flags)',
+      autoAntibodyPositive: 'n_autoantibodies column (0–4)',
     },
   },
   {
@@ -271,7 +268,19 @@ export const toolDefinitions = [
   },
   {
     name: 'filter_donors',
-    description: 'Filter individual donor records in a dataset by a numeric or categorical condition. Returns donor IDs that match OR do not match the filter. Use this when the user wants to keep/remove donors based on specific criteria (e.g., "only BMI > 25", "remove non-diabetic donors", "keep only female donors"). You MUST use this tool before outputting [TABLE_REMOVE:...] markers so you have the exact donor IDs.',
+    description: `Filter individual donor records in a dataset by one or more conditions (combined with AND). Returns donor IDs that match OR do not match the combined filter. Use this when the user wants to keep/remove donors based on specific criteria (e.g., "only BMI > 25", "remove non-diabetic donors", "T1D Stage 1 male donors"). You MUST use this tool before outputting [TABLE_REMOVE:...] markers so you have the exact donor IDs.
+
+IMPORTANT: For compound queries like "T1D stage 1 male donors", pass BOTH conditions in the 'filters' array in a SINGLE call. Do not make multiple separate calls and try to intersect them yourself. Example filters: [{"column":"T1D stage","operator":"==","value":"Stage 1"},{"column":"sex","operator":"==","value":"M"}].
+
+For HPAP, the actual column values are (use these EXACTLY or use the 'contains' operator for partial matches):
+- "sex" column values: "Male", "Female", "Unknown" (NOT "M"/"F"). For "male donors" use operator="==" value="Male".
+- "T1D stage" column values are long descriptive strings: "No stage", "Stage 1: Two or more autoantibodies, normal glucose metabolism level", "Stage 2: Two or more autoantibodies, dysglycemia (e.g., HbA1c ≥ 5.7%)", "Stage 3: One or more autoantibodies and diagnostic hyperglycemia or T1D diagnosis", "not applicable", "Unknown". For stage filters, ALWAYS use operator="contains" with a short value like "Stage 1", "Stage 2", or "Stage 3" — do not try to match the full string.
+- "clinical_diagnosis" column values include: "ND", "ND GAD+", "T1DM", "T1DM Recent", "T1DM DKA", "T1DM/MODY", "T2DM", "T2DM Gastric Bypass", "T2DM Polycystic Ovaries". For "T1D donors" use operator="contains" value="T1DM". For "non-diabetic" use operator="contains" value="ND".
+- Stage 1 and Stage 2 are extremely rare in HPAP (only ~3 donors total) — warn the user if they ask to filter on these.
+
+Column names differ per dataset:
+- HPAP (real data, 194 donors) uses the original Excel column names, including: donor_ID, clinical_diagnosis, gada, ia_2, iaa, znt8, "T1D stage", n_autoantibodies, disease_duration, age_years, "HbA1C (percentage)", prs_score, score_sans_hla, sex, Donor, DiseaseStatus, BMI, "C-Peptide (ng/ml)", "Diabetes Status", "Family History of Diabetes", "Genetic Ancestry (PancDB)", Ethnicities, and modality flag columns (0/1): scRNA-seq, scATAC-seq, snMultiomics, "CITE-seq Protein", TEA-seq, BCR-seq, TCR-seq, "Bulk RNA-seq", "Bulk ATAC-seq", WGS, "Calcium Imaging", "Flow Cytometry", "Oxygen Consumption", Perifusion, CODEX, IMC, Histology.
+- TEDDY / ImmPort / TrialNet (mock data) use: donorId, age, sex, bmi, clinicalDiagnosis, t1dStage, diseaseStatus, diseaseDuration, autoAntibody, autoAntibodyPositive, cellType.`,
     input_schema: {
       type: 'object',
       properties: {
@@ -280,27 +289,39 @@ export const toolDefinitions = [
           enum: ['hpap', 'teddy', 'immport', 'trialnet'],
           description: 'The dataset to filter',
         },
+        filters: {
+          type: 'array',
+          description: 'Array of filter conditions combined with AND. Use this for compound queries. Each item is a {column, operator, value} object.',
+          items: {
+            type: 'object',
+            properties: {
+              column: { type: 'string', description: 'Column name — must exactly match a column in the target dataset.' },
+              operator: { type: 'string', enum: ['>', '<', '>=', '<=', '==', '!=', 'contains', 'not_contains'] },
+              value: { type: 'string', description: 'Value to compare against (number for numeric columns, string for categorical)' },
+            },
+            required: ['column', 'operator', 'value'],
+          },
+        },
         column: {
           type: 'string',
-          enum: ['age', 'sex', 'bmi', 'clinicalDiagnosis', 't1dStage', 'diseaseStatus', 'autoAntibodyPositive'],
-          description: 'Column to filter on',
+          description: '(Legacy single-filter API) Column name to filter on. Prefer the "filters" array for new code.',
         },
         operator: {
           type: 'string',
           enum: ['>', '<', '>=', '<=', '==', '!=', 'contains', 'not_contains'],
-          description: 'Comparison operator',
+          description: '(Legacy single-filter API) Comparison operator.',
         },
         value: {
           type: 'string',
-          description: 'Value to compare against (number for numeric columns, string for categorical)',
+          description: '(Legacy single-filter API) Value to compare against.',
         },
         return_mode: {
           type: 'string',
           enum: ['matching', 'not_matching'],
-          description: '"matching" returns donors that match the filter, "not_matching" returns donors that do NOT match (useful for finding donors to remove)',
+          description: '"matching" returns donors that match the combined filter, "not_matching" returns donors that do NOT match (useful for finding donors to remove)',
         },
       },
-      required: ['dataset_id', 'column', 'operator', 'value'],
+      required: ['dataset_id'],
     },
   },
   {
@@ -480,57 +501,96 @@ function filterDonors(input) {
   const samples = demoSampleData[input.dataset_id];
   if (!samples) return { error: `No sample data for dataset '${input.dataset_id}'` };
 
-  const col = input.column;
-  const op = input.operator;
-  const rawVal = input.value;
+  const idKey = datasetIdKey[input.dataset_id] || 'donorId';
   const returnMode = input.return_mode || 'matching';
 
-  const numericCols = ['age', 'bmi', 'autoAntibodyPositive'];
-  const isNumeric = numericCols.includes(col);
-  const compareVal = isNumeric ? parseFloat(rawVal) : rawVal;
+  // Accept either a filters[] array (new API) or a single column/operator/value
+  // triple (legacy API). Normalize both to an array of conditions.
+  let conditions = [];
+  if (Array.isArray(input.filters) && input.filters.length > 0) {
+    conditions = input.filters;
+  } else if (input.column && input.operator && input.value != null) {
+    conditions = [{ column: input.column, operator: input.operator, value: input.value }];
+  } else {
+    return { error: 'filter_donors requires either a "filters" array or legacy column/operator/value parameters.' };
+  }
 
-  const matchFn = (row) => {
-    const cellVal = row[col];
+  if (samples.length === 0) {
+    return { dataset_id: input.dataset_id, total_donors: 0, result_count: 0, donor_ids: [], donors: [] };
+  }
+
+  // Validate every column up front so the model gets a clear error on typos.
+  const availableCols = Object.keys(samples[0]);
+  for (const c of conditions) {
+    if (!(c.column in samples[0])) {
+      return {
+        error: `Column '${c.column}' not found in dataset '${input.dataset_id}'. Available columns: ${availableCols.join(', ')}`,
+      };
+    }
+  }
+
+  // For each condition, pre-compute whether its column is numeric.
+  const compiledConds = conditions.map(c => {
+    const sampleVal = samples.find(r => r[c.column] != null)?.[c.column];
+    const isNumeric = typeof sampleVal === 'number';
+    return {
+      column: c.column,
+      operator: c.operator,
+      rawVal: c.value,
+      isNumeric,
+      compareVal: isNumeric ? parseFloat(c.value) : c.value,
+    };
+  });
+
+  const evalCondition = (row, cond) => {
+    const cellVal = row[cond.column];
     if (cellVal == null) return false;
-
-    if (isNumeric) {
+    if (cond.isNumeric) {
       const num = typeof cellVal === 'number' ? cellVal : parseFloat(cellVal);
       if (isNaN(num)) return false;
-      switch (op) {
-        case '>': return num > compareVal;
-        case '<': return num < compareVal;
-        case '>=': return num >= compareVal;
-        case '<=': return num <= compareVal;
-        case '==': return num === compareVal;
-        case '!=': return num !== compareVal;
-        default: return false;
-      }
-    } else {
-      const str = String(cellVal).toLowerCase();
-      const cmp = String(rawVal).toLowerCase();
-      switch (op) {
-        case '==': return str === cmp;
-        case '!=': return str !== cmp;
-        case 'contains': return str.includes(cmp);
-        case 'not_contains': return !str.includes(cmp);
+      switch (cond.operator) {
+        case '>': return num > cond.compareVal;
+        case '<': return num < cond.compareVal;
+        case '>=': return num >= cond.compareVal;
+        case '<=': return num <= cond.compareVal;
+        case '==': return num === cond.compareVal;
+        case '!=': return num !== cond.compareVal;
         default: return false;
       }
     }
+    const str = String(cellVal).toLowerCase();
+    const cmp = String(cond.rawVal).toLowerCase();
+    switch (cond.operator) {
+      case '==': return str === cmp;
+      case '!=': return str !== cmp;
+      case 'contains': return str.includes(cmp);
+      case 'not_contains': return !str.includes(cmp);
+      default: return false;
+    }
   };
+
+  const matchFn = (row) => compiledConds.every(c => evalCondition(row, c));
 
   const matching = samples.filter(matchFn);
   const notMatching = samples.filter(r => !matchFn(r));
-
   const resultSet = returnMode === 'not_matching' ? notMatching : matching;
 
+  const filterDesc = compiledConds.map(c => `${c.column} ${c.operator} ${c.rawVal}`).join(' AND ');
+
+  // Include the filtered columns in each returned donor so the model can cite them.
+  const cols = compiledConds.map(c => c.column);
   return {
     dataset_id: input.dataset_id,
-    filter: `${col} ${op} ${rawVal}`,
+    filter: filterDesc,
     return_mode: returnMode,
     total_donors: samples.length,
     result_count: resultSet.length,
-    donor_ids: resultSet.map(r => r.donorId),
-    donors: resultSet.map(r => ({ donorId: r.donorId, [col]: r[col] })),
+    donor_ids: resultSet.map(r => r[idKey]),
+    donors: resultSet.map(r => {
+      const out = { [idKey]: r[idKey] };
+      for (const c of cols) out[c] = r[c];
+      return out;
+    }),
   };
 }
 

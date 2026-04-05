@@ -3,14 +3,21 @@ import { demoModels } from '../data/demoModels';
 
 /**
  * Send a message to the Claude API via the Vite middleware proxy.
- * Falls back to mock responses if the API is unavailable.
+ * Reads a Server-Sent Events stream so the caller can observe the agent's
+ * tool-use steps live (via `onStep`). Falls back to mock responses if the
+ * API is unavailable.
+ *
+ * @param {Array} messages - conversation history
+ * @param {{ onStep?: (step: object, allSteps: object[]) => void }} opts
  */
-export async function sendMessage(messages) {
+export async function sendMessage(messages, opts = {}) {
+  const { onStep } = opts;
   const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    // 90s cap for long multi-tool runs.
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -19,22 +26,59 @@ export async function sendMessage(messages) {
       signal: controller.signal,
     });
 
+    if (!response.ok || !response.body) {
+      clearTimeout(timeout);
+      console.warn('API returned non-OK status, falling back to mock');
+      return { ...generateMockResponse(lastMessage), steps: [] };
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const steps = [];
+    let doneEvent = null;
+    let errorEvent = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE frames are separated by a blank line.
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() || '';
+
+      for (const frame of frames) {
+        const line = frame.split('\n').find(l => l.startsWith('data:'));
+        if (!line) continue;
+        let event;
+        try {
+          event = JSON.parse(line.slice(5).trim());
+        } catch {
+          continue;
+        }
+        if (event.type === 'done') {
+          doneEvent = event;
+        } else if (event.type === 'error') {
+          errorEvent = event;
+        } else {
+          steps.push(event);
+          try { onStep?.(event, steps.slice()); } catch (e) { /* ignore UI errors */ }
+        }
+      }
+    }
+
     clearTimeout(timeout);
 
-    if (!response.ok) {
-      console.warn('API returned non-OK status, falling back to mock');
-      return generateMockResponse(lastMessage);
+    if (errorEvent || !doneEvent || !doneEvent.content) {
+      console.warn('API stream ended without a done event, falling back to mock');
+      return { ...generateMockResponse(lastMessage), steps };
     }
 
-    const data = await response.json();
-    if (!data.content || data.error) {
-      console.warn('API returned empty/error, falling back to mock');
-      return generateMockResponse(lastMessage);
-    }
-    return parseResponse(data.content);
+    return { ...parseResponse(doneEvent.content), steps };
   } catch (err) {
     console.warn('API call failed, falling back to mock:', err.message);
-    return generateMockResponse(lastMessage);
+    return { ...generateMockResponse(lastMessage), steps: [] };
   }
 }
 
@@ -56,46 +100,39 @@ function generateMockResponse(text) {
     };
   }
 
-  // Add rows to HPAP
-  if ((text.includes('add') && text.includes('hpap')) || (text.includes('add') && text.includes('adult'))) {
-    return {
-      content: `I've identified 3 additional adult donors from the HPAP registry that match your hypothesis criteria. These donors have confirmed T1D diagnosis with available RNA-seq data:`,
-      recommendations: null,
-      modelRecommendations: null,
-      tableOps: [{
-        type: 'add_rows',
-        datasetId: 'hpap',
-        rows: [
-          { donorId: 'HPAP-016', age: 35, sex: 'M', bmi: 26.2, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 3', diseaseStatus: 'AAb+', diseaseDuration: '8 yrs', autoAntibody: 'GADA, IA-2', autoAntibodyPositive: 2, cellType: 'Islet cells' },
-          { donorId: 'HPAP-017', age: 58, sex: 'F', bmi: 29.4, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 3', diseaseStatus: 'AAb+', diseaseDuration: '20 yrs', autoAntibody: 'GADA, IA-2, ZnT8', autoAntibodyPositive: 3, cellType: 'Islet cells' },
-          { donorId: 'HPAP-018', age: 22, sex: 'M', bmi: 21.5, clinicalDiagnosis: 'T1D', t1dStage: 'Stage 2', diseaseStatus: 'AAb+', diseaseDuration: '2 yrs', autoAntibody: 'GADA', autoAntibodyPositive: 1, cellType: 'Islet cells' },
-        ],
-      }],
-    };
-  }
+  // Note: HPAP is real data (194 donors) — we no longer fabricate additional HPAP rows.
+  // The AI is instructed not to TABLE_ADD for HPAP in the system prompt.
 
   // Remove rows from HPAP
-  if ((text.includes('remove') || text.includes('exclude')) && (text.includes('non-diabetic') || text.includes('t2d'))) {
-    return {
-      content: `I've marked the non-diabetic and T2D donors for removal from HPAP, as they are not relevant to your T1D-focused hypothesis. This will help focus the analysis on T1D-specific gene expression patterns.`,
-      recommendations: null,
-      modelRecommendations: null,
-      tableOps: [{
-        type: 'remove_rows',
-        datasetId: 'hpap',
-        donorIds: ['HPAP-002', 'HPAP-004', 'HPAP-005', 'HPAP-007', 'HPAP-010', 'HPAP-011', 'HPAP-014'],
-      }],
-    };
+  if ((text.includes('remove') || text.includes('exclude')) && (text.includes('non-diabetic') || text.includes('t2d') || text.includes('nd'))) {
+    const hpapDataset = demoDatasets.find(d => d.id === 'hpap');
+    if (hpapDataset) {
+      const idKey = hpapDataset.idKey || 'donor_ID';
+      // HPAP real column: clinical_diagnosis — ND = Non-Diabetic, T2DM = Type 2
+      const toRemove = hpapDataset.sampleData
+        .filter(row => {
+          const dx = String(row.clinical_diagnosis || '').toUpperCase();
+          return dx.includes('ND') || dx.includes('T2D');
+        })
+        .map(row => row[idKey]);
+      return {
+        content: `I've identified ${toRemove.length} non-diabetic and T2D donors in HPAP and marked them for removal, as they are not relevant to a T1D-focused hypothesis.`,
+        recommendations: null,
+        modelRecommendations: null,
+        tableOps: [{ type: 'remove_rows', datasetId: 'hpap', donorIds: toRemove }],
+      };
+    }
   }
 
   // BMI filter — "only BMI > 25" or "BMI greater than 25"
   if (text.includes('bmi') && (text.includes('>') || text.includes('greater') || text.includes('大於') || text.includes('only'))) {
-    // Find HPAP donors with BMI <= 25 to mark for removal
+    // Find HPAP donors with BMI <= 25 to mark for removal (HPAP uses real Excel column names)
     const hpapDataset = demoDatasets.find(d => d.id === 'hpap');
     if (hpapDataset) {
+      const idKey = hpapDataset.idKey || 'donor_ID';
       const toRemove = hpapDataset.sampleData
-        .filter(row => row.bmi <= 25)
-        .map(row => row.donorId);
+        .filter(row => typeof row.BMI === 'number' && row.BMI <= 25)
+        .map(row => row[idKey]);
       return {
         content: `I've identified ${toRemove.length} donors in HPAP with BMI ≤ 25 and marked them for removal. This will focus your analysis on donors with BMI > 25, which may be relevant for studying metabolic factors in T1D.`,
         recommendations: null,
@@ -137,17 +174,50 @@ function parseResponse(text) {
   const modelMarkers = [];
   const tableOps = [];
 
-  // Extract [DATASET:id] markers
-  const datasetRegex = /\[DATASET:(\w+)\]/g;
+  // Extract dataset markers. Two forms are supported:
+  //   [DATASET:hpap]                                 — plain base dataset
+  //   [DATASET:hpap|label=...|filters=col:op:val&...] — filtered variant card
+  // The filtered form builds a synthetic sub-dataset (different id, filtered
+  // sampleData, custom title) so the UI card shows the actual filter result
+  // and the workspace can add it as a separate tab.
+  const datasetRegex = /\[DATASET:([^\]]+)\]/g;
   let match;
+  let variantCounter = 0;
   while ((match = datasetRegex.exec(text)) !== null) {
-    const id = match[1];
-    const dataset = demoDatasets.find(d => d.id === id);
-    if (dataset) {
-      const beforeMarker = text.substring(0, match.index);
-      const reason = extractReason(beforeMarker, dataset.title);
-      datasetMarkers.push({ id, reason });
+    const body = match[1];
+    const segments = body.split('|');
+    const baseId = segments[0].trim();
+    const base = demoDatasets.find(d => d.id === baseId);
+    if (!base) continue;
+
+    const beforeMarker = text.substring(0, match.index);
+    const reason = extractReason(beforeMarker, base.title);
+
+    if (segments.length === 1) {
+      datasetMarkers.push({ id: baseId, reason });
+      continue;
     }
+
+    // Parse key=value pairs from the remaining segments.
+    const params = {};
+    for (let i = 1; i < segments.length; i++) {
+      const seg = segments[i];
+      const eq = seg.indexOf('=');
+      if (eq === -1) continue;
+      params[seg.slice(0, eq).trim()] = seg.slice(eq + 1).trim();
+    }
+
+    const label = params.label || base.title;
+    const filters = parseFilterSpec(params.filters || '');
+    const variant = buildFilteredVariant(base, `${baseId}__v${++variantCounter}`, label, filters);
+    datasetMarkers.push({
+      id: variant.id,
+      baseId,
+      reason,
+      variant,         // full synthetic dataset object — used by the card
+      label,
+      filters,
+    });
   }
 
   // Extract [MODEL:id] markers
@@ -199,7 +269,7 @@ function parseResponse(text) {
 
   // Clean the text: remove all markers
   let cleanText = text
-    .replace(/\[DATASET:\w+\]/g, '')
+    .replace(/\[DATASET:[^\]]+\]/g, '')
     .replace(/\[MODEL:[\w-]+\]/g, '')
     .replace(/\[TABLE_REMOVE:\w+:[\w,-]+\]/g, '')
     .replace(/\[TABLE_ADD:\w+:.*?\]/g, '')
@@ -237,4 +307,82 @@ function extractReason(textBefore, title) {
     .replace(/^[-*\d.]+\s*/, '')
     .replace(/[—–]\s*/, '')
     .trim();
+}
+
+/**
+ * Parse a filter spec from the DATASET marker payload.
+ * Format: "col:op:val&col:op:val"
+ * Each filter is a triple separated by ':', filters are joined by '&'.
+ * Column names may contain spaces; the split is on the FIRST two colons so
+ * values can contain colons too.
+ */
+function parseFilterSpec(spec) {
+  if (!spec) return [];
+  return spec.split('&').map(f => {
+    const first = f.indexOf(':');
+    if (first === -1) return null;
+    const second = f.indexOf(':', first + 1);
+    if (second === -1) return null;
+    return {
+      column: f.slice(0, first).trim(),
+      operator: f.slice(first + 1, second).trim(),
+      value: f.slice(second + 1).trim(),
+    };
+  }).filter(Boolean);
+}
+
+/**
+ * Apply a filter spec to a row (AND semantics — all conditions must match).
+ */
+function rowMatchesFilters(row, filters) {
+  for (const f of filters) {
+    const cell = row[f.column];
+    if (cell == null) return false;
+    const isNumeric = typeof cell === 'number';
+    if (isNumeric) {
+      const num = cell;
+      const cmp = parseFloat(f.value);
+      switch (f.operator) {
+        case '>':  if (!(num > cmp))  return false; break;
+        case '<':  if (!(num < cmp))  return false; break;
+        case '>=': if (!(num >= cmp)) return false; break;
+        case '<=': if (!(num <= cmp)) return false; break;
+        case '==': if (num !== cmp)   return false; break;
+        case '!=': if (num === cmp)   return false; break;
+        default: return false;
+      }
+    } else {
+      const s = String(cell).toLowerCase();
+      const v = String(f.value).toLowerCase();
+      switch (f.operator) {
+        case '==': if (s !== v) return false; break;
+        case '!=': if (s === v) return false; break;
+        case 'contains':     if (!s.includes(v)) return false; break;
+        case 'not_contains': if (s.includes(v))  return false; break;
+        default: return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * Build a synthetic filtered variant dataset from a base dataset.
+ * The variant has the same schema (columns, idKey) but filtered sampleData,
+ * updated donorCount, and a custom title.
+ */
+function buildFilteredVariant(base, variantId, label, filters) {
+  const filteredRows = filters.length > 0
+    ? base.sampleData.filter(row => rowMatchesFilters(row, filters))
+    : [...base.sampleData];
+  return {
+    ...base,
+    id: variantId,
+    baseId: base.id,
+    title: label,
+    donorCount: filteredRows.length,
+    sampleData: filteredRows,
+    isVariant: true,
+    variantFilters: filters,
+  };
 }

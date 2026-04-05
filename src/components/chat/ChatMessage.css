@@ -7,21 +7,55 @@
   justify-content: flex-end;
 }
 
+/* Column wrapper so the copy button sits under the bubble */
+.chat-message-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 70%;
+}
+.chat-message-assistant .chat-message-col,
+.chat-message-system .chat-message-col {
+  align-items: flex-start;
+  max-width: 100%;
+  flex: 1;
+}
+
+/* Copy button shown below user bubble */
+.chat-message-copy {
+  margin-top: 4px;
+  padding: 3px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.chat-message-copy:hover {
+  opacity: 1;
+  color: var(--color-accent-blue);
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .chat-message-assistant,
 .chat-message-system {
   justify-content: flex-start;
 }
 
-/* User bubble */
+/* User bubble — slightly darker than the chat background, dark text */
 .chat-message-user .chat-message-content {
-  max-width: 70%;
   padding: var(--space-md);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   border-radius: var(--radius-lg);
   white-space: pre-wrap;
-  background: var(--color-accent-blue);
-  color: white;
+  background: #ECEAE4;
+  color: var(--color-text-primary);
 }
 
 /* Assistant — plain text, no bubble */
@@ -30,7 +64,45 @@
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
   color: var(--color-text-primary);
-  white-space: pre-wrap;
+}
+
+/* Rendered markdown elements inside assistant messages */
+.chat-message-assistant .md-paragraph {
+  margin: 0 0 var(--space-sm) 0;
+}
+.chat-message-assistant .md-paragraph:last-child {
+  margin-bottom: 0;
+}
+.chat-message-assistant .md-heading {
+  margin: var(--space-md) 0 var(--space-xs) 0;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.chat-message-assistant h3.md-heading { font-size: var(--font-size-md); }
+.chat-message-assistant h4.md-heading { font-size: var(--font-size-sm); }
+.chat-message-assistant h5.md-heading { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+.chat-message-assistant .md-heading:first-child {
+  margin-top: 0;
+}
+.chat-message-assistant .md-list {
+  margin: 0 0 var(--space-sm) 0;
+  padding-left: 1.25em;
+}
+.chat-message-assistant .md-list li {
+  margin-bottom: 2px;
+}
+.chat-message-assistant .md-list li:last-child {
+  margin-bottom: 0;
+}
+.chat-message-assistant .chat-message-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.chat-message-assistant .chat-message-content strong {
+  font-weight: var(--font-weight-semibold);
 }
 
 /* System messages */

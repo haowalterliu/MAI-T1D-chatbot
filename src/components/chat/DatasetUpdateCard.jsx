@@ -1,11 +1,10 @@
 import { useExperiment } from '../../context/ExperimentContext';
-import { demoDatasets } from '../../data/demoDatasets';
 import Tag from '../common/Tag';
 import './DatasetUpdateCard.css';
 
 function DatasetUpdateCard({ op, messageId }) {
-  const { tableStates, triggerUpdate, config } = useExperiment();
-  const dataset = demoDatasets.find(d => d.id === op.datasetId);
+  const { tableStates, triggerUpdate, config, getDataset } = useExperiment();
+  const dataset = getDataset(op.datasetId);
   if (!dataset) return null;
 
   const isAdded = config.selectedDatasets.includes(op.datasetId);

@@ -7,7 +7,7 @@ import DatasetToolbar from './DatasetToolbar';
 import DatasetTable from './DatasetTable';
 import './DatasetWorkspace.css';
 
-const TABLE_COLUMNS = [
+const DEFAULT_TABLE_COLUMNS = [
   { key: 'donorId', label: 'Donor ID' },
   { key: 'age', label: 'Age' },
   { key: 'sex', label: 'Sex' },
@@ -20,6 +20,26 @@ const TABLE_COLUMNS = [
   { key: 'autoAntibodyPositive', label: 'AAb+' },
   { key: 'cellType', label: 'Cell / Tissue Type' },
 ];
+
+/**
+ * Build a list of short, human-readable labels (one per filter) used as
+ * separate tag chips on workspace tabs.
+ *  [{column:"sex",op:"==",value:"Male"}, {column:"T1D stage",op:"contains",value:"Stage 1"}]
+ *   -> ["Male", "Stage 1"]
+ */
+function filterTagLabels(filters) {
+  if (!Array.isArray(filters) || filters.length === 0) return [];
+  return filters.map(f => {
+    const v = String(f.value ?? '').trim();
+    if (f.operator === '==' || f.operator === '===') {
+      const lv = v.toLowerCase();
+      if (lv === '1' || lv === 'yes' || lv === 'true') return f.column;
+      if (lv === '0' || lv === 'no' || lv === 'false') return `No ${f.column}`;
+    }
+    if (f.operator === '==' || f.operator === 'contains') return v;
+    return `${f.column} ${f.operator} ${v}`;
+  });
+}
 
 function makeInitialState() {
   return {
@@ -46,6 +66,7 @@ function DatasetWorkspace({ onExperimentStart }) {
     config, updateConfig, runExperiment, addMessage, pendingTableOps, consumeTableOps,
     tableStates, setTableStates, tableHistories: histories, setTableHistories: setHistories,
     committedData, setCommittedData, updateTrigger, consumeUpdateTrigger,
+    getDataset,
   } = useExperiment();
   const selectedDatasets = config.selectedDatasets;
 
@@ -121,9 +142,13 @@ function DatasetWorkspace({ onExperimentStart }) {
   }, [pendingTableOps]);
 
   const activeDataset = useMemo(
-    () => demoDatasets.find(d => d.id === activeTabId),
-    [activeTabId]
+    () => getDataset(activeTabId),
+    [activeTabId, getDataset]
   );
+
+  // Per-dataset schema — HPAP uses its real Excel column set; others use the default schema
+  const activeColumns = activeDataset?.columns || DEFAULT_TABLE_COLUMNS;
+  const activeIdKey = activeDataset?.idKey || 'donorId';
 
   const activeState = tableStates[activeTabId] || makeInitialState();
   const activeHistory = histories[activeTabId] || { past: [], future: [] };
@@ -222,10 +247,18 @@ function DatasetWorkspace({ onExperimentStart }) {
     const baseData = committedData[activeTabId] || activeDataset.sampleData;
     let data = [...baseData, ...(activeState.addedRows || [])];
 
-    // Apply filters
+    // Apply filters — case-insensitive contains match so users can type
+    // partial values (e.g. "stage" matches "Stage 1" / "Stage 2").
     for (const [col, val] of Object.entries(activeState.filters)) {
       if (val) {
-        data = data.filter(row => String(row[col]) === val);
+        const needle = String(val).toLowerCase().trim();
+        if (needle) {
+          data = data.filter(row => {
+            const cell = row[col];
+            if (cell === null || cell === undefined) return false;
+            return String(cell).toLowerCase().includes(needle);
+          });
+        }
       }
     }
 
@@ -264,20 +297,20 @@ function DatasetWorkspace({ onExperimentStart }) {
     });
   };
 
-  const handleSelectRow = (donorId) => {
+  const handleSelectRow = (rowId) => {
     const next = new Set(activeState.selectedRows);
-    if (next.has(donorId)) {
-      next.delete(donorId);
+    if (next.has(rowId)) {
+      next.delete(rowId);
     } else {
-      next.add(donorId);
+      next.add(rowId);
     }
     updateActiveState({ selectedRows: next });
   };
 
   const handleSelectAll = () => {
     const selectableIds = processedData
-      .filter(row => !activeState.deletedRows.has(row.donorId))
-      .map(row => row.donorId);
+      .filter(row => !activeState.deletedRows.has(row[activeIdKey]))
+      .map(row => row[activeIdKey]);
     const allSelected = selectableIds.every(id => activeState.selectedRows.has(id));
     if (allSelected) {
       updateActiveState({ selectedRows: new Set() });
@@ -296,7 +329,7 @@ function DatasetWorkspace({ onExperimentStart }) {
 
   // Shared update function — can be called for any dataset (toolbar or chat card)
   const performUpdate = useCallback((targetId) => {
-    const targetDataset = demoDatasets.find(d => d.id === targetId);
+    const targetDataset = getDataset(targetId);
     const state = tableStates[targetId];
     if (!targetId || !targetDataset || !state) return;
 
@@ -305,12 +338,13 @@ function DatasetWorkspace({ onExperimentStart }) {
     if (deletedCount === 0 && addedCount === 0) return;
 
     // Commit: build new base data with deletions applied and added rows merged
+    const idKey = targetDataset.idKey || 'donorId';
     const currentBase = committedData[targetId] || targetDataset.sampleData;
     const survivingOriginal = currentBase.filter(
-      row => !state.deletedRows.has(row.donorId)
+      row => !state.deletedRows.has(row[idKey])
     );
     const survivingAdded = (state.addedRows || []).filter(
-      row => !state.deletedRows.has(row.donorId)
+      row => !state.deletedRows.has(row[idKey])
     );
     const newBaseData = [...survivingOriginal, ...survivingAdded];
 
@@ -347,11 +381,37 @@ function DatasetWorkspace({ onExperimentStart }) {
       content: `Updated ${targetDataset.title}: ${parts.join(', ')}.`,
       timestamp: new Date(),
     });
-  }, [tableStates, committedData, addMessage, setCommittedData, setTableStates, setHistories]);
+  }, [tableStates, committedData, addMessage, setCommittedData, setTableStates, setHistories, getDataset]);
 
   const handleSelectAndUpdate = () => {
     performUpdate(activeTabId);
   };
+
+  // Download the current (processed) table as a CSV file
+  const handleDownloadCsv = useCallback(() => {
+    if (!activeDataset) return;
+    const cols = activeColumns;
+    const rows = processedData.filter(r => !activeState.deletedRows.has(r[activeIdKey]));
+    const escape = (val) => {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'number' && Number.isNaN(val)) return '';
+      const s = String(val);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map(c => escape(c.label)).join(',');
+    const body = rows.map(r => cols.map(c => escape(r[c.key])).join(',')).join('\n');
+    const csv = header + '\n' + body;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = (activeDataset.title || 'dataset').replace(/[^a-z0-9-_ ]/gi, '_');
+    a.download = `${safeName}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [activeDataset, activeColumns, processedData, activeState.deletedRows, activeIdKey]);
 
   // Listen for external update triggers (from chat card "Update" button)
   useEffect(() => {
@@ -430,17 +490,26 @@ function DatasetWorkspace({ onExperimentStart }) {
       <div className="workspace-header">
         <div className="workspace-tabs">
           {selectedDatasets.map(id => {
-            const ds = demoDatasets.find(d => d.id === id);
+            const ds = getDataset(id);
             if (!ds) return null;
             const state = tableStates[id];
             const hasPendingChanges = state && (state.deletedRows.size > 0 || (state.addedRows && state.addedRows.length > 0));
+            // For variant datasets, show the base name + a compact filter
+            // label pill so multiple filtered sub-cohorts of the same base
+            // are distinguishable at a glance (e.g. "HPAP  [Stage 1 · Male]").
+            const base = ds.isVariant ? demoDatasets.find(d => d.id === ds.baseId) : null;
+            const baseName = base ? base.title.split(':')[0].trim() : ds.title;
+            const variantTags = ds.isVariant ? filterTagLabels(ds.variantFilters) : [];
             return (
               <button
                 key={id}
                 className={`workspace-tab ${activeTabId === id ? 'active' : ''}`}
                 onClick={() => setActiveTabId(id)}
               >
-                {ds.title}
+                <span className="workspace-tab-name">{baseName}</span>
+                {variantTags.map((t, i) => (
+                  <span key={i} className="workspace-tab-variant">{t}</span>
+                ))}
                 {hasPendingChanges && <span className="tab-update-dot" />}
               </button>
             );
@@ -495,7 +564,7 @@ function DatasetWorkspace({ onExperimentStart }) {
         <div className="workspace-body">
           <DatasetTableHeader dataset={activeDataset} />
           <DatasetToolbar
-            columns={TABLE_COLUMNS}
+            columns={activeColumns}
             sortConfig={activeState.sortConfig}
             filters={activeState.filters}
             selectedCount={activeState.selectedRows.size}
@@ -508,13 +577,15 @@ function DatasetWorkspace({ onExperimentStart }) {
             onUndo={handleUndo}
             onRedo={handleRedo}
             onSelectAndUpdate={handleSelectAndUpdate}
+            onDownloadCsv={handleDownloadCsv}
           />
           <DatasetTable
             data={processedData}
-            columns={TABLE_COLUMNS}
+            columns={activeColumns}
+            idKey={activeIdKey}
             selectedRows={activeState.selectedRows}
             deletedRows={activeState.deletedRows}
-            addedRowIds={new Set((activeState.addedRows || []).map(r => r.donorId))}
+            addedRowIds={new Set((activeState.addedRows || []).map(r => r[activeIdKey]))}
             sortConfig={activeState.sortConfig}
             onSelectRow={handleSelectRow}
             onSelectAll={handleSelectAll}

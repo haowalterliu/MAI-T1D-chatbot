@@ -1,21 +1,32 @@
 import './DatasetDetailModal.css';
 
-const TABLE_COLUMNS = ['age', 'sex', 'bmi', 'clinicalDiagnosis', 't1dStage', 'diseaseStatus', 'diseaseDuration', 'autoAntibody', 'autoAntibodyPositive', 'cellType'];
-const TABLE_HEADERS = {
-  age: 'Age',
-  sex: 'Sex',
-  bmi: 'BMI',
-  clinicalDiagnosis: 'Clinical Diagnosis',
-  t1dStage: 'T1D Stage',
-  diseaseStatus: 'Disease Status',
-  diseaseDuration: 'Disease Duration',
-  autoAntibody: 'Auto Antibody',
-  autoAntibodyPositive: 'AAb+',
-  cellType: 'Cell / Tissue Type',
-};
+const DEFAULT_COLUMNS = [
+  { key: 'donorId', label: 'Donor ID' },
+  { key: 'age', label: 'Age' },
+  { key: 'sex', label: 'Sex' },
+  { key: 'bmi', label: 'BMI' },
+  { key: 'clinicalDiagnosis', label: 'Clinical Diagnosis' },
+  { key: 't1dStage', label: 'T1D Stage' },
+  { key: 'diseaseStatus', label: 'Disease Status' },
+  { key: 'diseaseDuration', label: 'Disease Duration' },
+  { key: 'autoAntibody', label: 'Auto Antibody' },
+  { key: 'autoAntibodyPositive', label: 'AAb+' },
+  { key: 'cellType', label: 'Cell / Tissue Type' },
+];
+
+function formatCell(v, key) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+  const flagCols = ['scRNA-seq','scATAC-seq','snMultiomics','CITE-seq Protein','TEA-seq','BCR-seq','TCR-seq','Bulk RNA-seq','Bulk ATAC-seq','WGS','Calcium Imaging','Flow Cytometry','Oxygen Consumption','Perifusion','CODEX','IMC','Histology','gada','ia_2','iaa','znt8'];
+  if (typeof v === 'number' && flagCols.includes(key) && (v === 0 || v === 1)) {
+    return v === 1 ? 'Yes' : 'No';
+  }
+  return v;
+}
 
 function DatasetDetailModal({ dataset, onClose }) {
   const { metadata, sampleData = [] } = dataset;
+  const columns = dataset.columns || DEFAULT_COLUMNS;
 
   return (
     <>
@@ -57,12 +68,12 @@ function DatasetDetailModal({ dataset, onClose }) {
               <div className="modal-table-wrapper">
                 <table className="modal-table">
                   <thead>
-                    <tr>{TABLE_COLUMNS.map(c => <th key={c}>{TABLE_HEADERS[c]}</th>)}</tr>
+                    <tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}</tr>
                   </thead>
                   <tbody>
                     {sampleData.map((row, i) => (
                       <tr key={i}>
-                        {TABLE_COLUMNS.map(c => <td key={c}>{row[c] ?? '—'}</td>)}
+                        {columns.map(c => <td key={c.key}>{formatCell(row[c.key], c.key)}</td>)}
                       </tr>
                     ))}
                   </tbody>

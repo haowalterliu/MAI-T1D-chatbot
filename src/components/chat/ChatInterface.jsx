@@ -3,19 +3,22 @@ import { useExperiment } from '../../context/ExperimentContext';
 import { sendMessage } from '../../services/chatService';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import ChatThoughts from './ChatThoughts';
 import DatasetRecommendation from './DatasetRecommendation';
 import ModelRecommendation from './ModelRecommendation';
 import DatasetUpdateCard from './DatasetUpdateCard';
+import { extractQueryTags } from '../../utils/extractQueryTags';
 import './ChatInterface.css';
 
 function ChatInterface({ page }) {
   const { messages, addMessage, config, addTableOp } = useExperiment();
   const messagesEndRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [liveSteps, setLiveSteps] = useState([]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, liveSteps]);
 
   const handleSendMessage = async (text) => {
     // Add user message immediately
@@ -27,6 +30,7 @@ function ChatInterface({ page }) {
     });
 
     setIsLoading(true);
+    setLiveSteps([]);
 
     try {
       // Build conversation history for Claude (only role + content)
@@ -34,15 +38,24 @@ function ChatInterface({ page }) {
         .map(m => ({ role: m.role, content: m.content }))
         .concat({ role: 'user', content: text });
 
-      const response = await sendMessage(claudeMessages);
+      const response = await sendMessage(claudeMessages, {
+        onStep: (_step, allSteps) => setLiveSteps(allSteps),
+      });
+
+      // Extract filter tags from the user's question and attach to every
+      // dataset recommendation so the card can display the actual filters
+      // the user asked for (e.g., "T1D stage 1", "male").
+      const queryTags = extractQueryTags(text);
+      const recsWithTags = response.recommendations?.map(r => ({ ...r, queryTags })) || response.recommendations;
 
       addMessage({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.content,
-        recommendations: response.recommendations,
+        recommendations: recsWithTags,
         modelRecommendations: response.modelRecommendations,
         tableOps: response.tableOps || null,
+        steps: response.steps || null,
         timestamp: new Date(),
       });
 
@@ -62,6 +75,7 @@ function ChatInterface({ page }) {
       });
     } finally {
       setIsLoading(false);
+      setLiveSteps([]);
     }
   };
 
@@ -79,10 +93,12 @@ function ChatInterface({ page }) {
           const hasRecs = msg.recommendations && msg.recommendations.length > 0;
           const hasModels = msg.modelRecommendations && msg.modelRecommendations.length > 0;
           const hasTableOps = msg.tableOps && msg.tableOps.length > 0;
+          const hasSteps = msg.steps && msg.steps.length > 0;
 
-          if (hasRecs || hasModels || hasTableOps) {
+          if (hasRecs || hasModels || hasTableOps || hasSteps) {
             return (
               <div key={msg.id}>
+                {hasSteps && <ChatThoughts steps={msg.steps} live={false} />}
                 <ChatMessage message={msg} />
                 {hasRecs && msg.recommendations.map(rec => (
                   <DatasetRecommendation key={rec.id} recommendation={rec} />
@@ -99,16 +115,16 @@ function ChatInterface({ page }) {
           return <ChatMessage key={msg.id} message={msg} />;
         })}
         {isLoading && (
-          <div className="chat-typing-indicator">
-            <span className="typing-dot"></span>
-            <span className="typing-dot"></span>
-            <span className="typing-dot"></span>
-          </div>
+          <ChatThoughts steps={liveSteps} live={true} />
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+      <ChatInput
+        onSend={handleSendMessage}
+        disabled={isLoading}
+        showExamples={messages.length === 0 && !isLoading}
+      />
     </div>
   );
 }

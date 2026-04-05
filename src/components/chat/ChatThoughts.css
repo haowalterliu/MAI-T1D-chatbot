@@ -1,0 +1,144 @@
+.chat-thoughts {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Header: title on the left, chevron on the right (done state).
+   Live state uses .chat-thoughts-header-live which keeps spinner+title only. */
+.chat-thoughts-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.chat-thoughts-header:hover .chat-thoughts-title {
+  color: var(--color-accent-blue);
+}
+
+.chat-thoughts-chevron {
+  display: inline-block;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.chat-thoughts-chevron.open {
+  transform: rotate(90deg);
+}
+
+.chat-thoughts-title {
+  color: var(--color-text-primary);
+}
+
+/* Shimmer animation while the agent is thinking — sweeps a light-to-grey
+   gradient across the title text. */
+.chat-thoughts-title.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-text-secondary) 0%,
+    var(--color-text-secondary) 35%,
+    #ffffff 50%,
+    var(--color-text-secondary) 65%,
+    var(--color-text-secondary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: chat-thoughts-shimmer 1.6s linear infinite;
+}
+
+@keyframes chat-thoughts-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Body — flat indented dropdown list, no tree rail or connectors */
+.chat-thoughts-tree {
+  position: relative;
+  margin-left: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+  padding-bottom: 4px;
+}
+
+/* Each tool invocation */
+.thought-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.thought-item-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.thought-tool {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+}
+
+.thought-pill {
+  display: inline-block;
+  max-width: 360px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thought-result {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.thought-running {
+  font-style: italic;
+  color: var(--color-accent-blue);
+}
+
+.thought-reasoning-text {
+  font-style: italic;
+}
+
+/* "Show N more" toggle */
+.chat-thoughts-more {
+  position: relative;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 10px;
+  cursor: pointer;
+}
+.chat-thoughts-more:hover {
+  color: var(--color-accent-blue);
+}

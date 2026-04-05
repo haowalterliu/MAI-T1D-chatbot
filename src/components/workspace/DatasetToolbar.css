@@ -19,12 +19,21 @@
   align-items: center;
 }
 
-/* Buttons */
+/* Buttons — shared sizing so every toolbar button has the same height */
+.toolbar-btn,
+.toolbar-update-btn,
+.toolbar-download-btn {
+  box-sizing: border-box;
+  height: 28px;
+  line-height: 1;
+  font-family: var(--font-family);
+}
+
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 0 10px;
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   background: var(--color-bg-primary);
@@ -200,4 +209,32 @@
 
 .toolbar-update-btn.active:hover {
   background: var(--color-accent-blue-hover);
+}
+
+/* Download CSV — always-enabled secondary button */
+.toolbar-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--space-sm);
+  padding: 4px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.toolbar-download-btn:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+  border-color: var(--color-text-secondary);
+}
+
+.toolbar-download-btn svg {
+  color: var(--color-text-secondary);
 }

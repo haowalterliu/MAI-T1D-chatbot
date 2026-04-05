@@ -1,27 +1,78 @@
 .chat-input-form {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+  flex-direction: column;
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--color-border-default);
   background: transparent;
   flex-shrink: 0;
+  gap: var(--space-sm);
 }
 
-/* Wrapper acts as the visible "input field" container */
+/* Example prompt chips shown above the input on empty state */
+.chat-input-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px 4px 2px;
+}
+
+.chat-example-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  transition: color 0.15s ease;
+}
+
+.chat-example-chip:hover:not(:disabled) {
+  color: var(--color-accent-blue);
+}
+
+.chat-example-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-example-icon {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.chat-example-chip:hover:not(:disabled) .chat-example-icon {
+  color: var(--color-accent-blue);
+}
+
+/* Wrapper acts as the visible "input field" container.
+   Lays out as: textarea on top, actions row (dataset picker + send) at the bottom. */
 .chat-input-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
-  height: 38px;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg);
   transition: border-color 0.15s ease;
-  padding: 0 4px;
+  padding: 8px 10px;
   box-sizing: border-box;
+  gap: 6px;
+}
+
+/* Bottom row inside the input container holding the dataset picker and send button */
+.chat-input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
 }
 
 .chat-input-wrapper:focus-within {
@@ -35,6 +86,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
+  margin-top: 0;
   border: none;
   border-radius: var(--radius-md);
   background: none;
@@ -50,27 +102,35 @@
   background: rgba(59, 130, 246, 0.08);
 }
 
-/* Actual text input — no border, sits inside wrapper */
+/* Actual text input — textarea that auto-grows based on content */
 .chat-input-field {
-  flex: 1;
-  padding: 8px 4px;
+  width: 100%;
+  padding: 2px 2px;
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
+  line-height: 1.5;
   color: var(--color-text-primary);
   background: none;
   border: none;
   outline: none;
   min-width: 0;
+  resize: none;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 160px;
+  box-sizing: border-box;
 }
 
 .chat-input-field::placeholder {
   color: var(--color-text-secondary);
 }
 
-/* Send button — outside the input wrapper */
+/* Send button — sits in the actions row at the bottom of the input wrapper */
 .chat-send-btn {
-  padding: 0 var(--space-lg);
-  height: 38px;
+  padding: 0 var(--space-md);
+  height: 30px;
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
