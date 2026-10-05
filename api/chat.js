@@ -1,4 +1,7 @@
 import { runAgent } from '../server/api.js';
+import { chatErrorEvent } from '../server/chatErrors.js';
+
+export const maxDuration = 120;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   // Stream tool-use events to the client as Server-Sent Events so the
-  // chain-of-thoughts UI can update live while Claude is running.
+  // chain-of-thoughts UI can update live while the agent is running.
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
@@ -21,12 +24,9 @@ export default async function handler(req, res) {
   try {
     await runAgent(req.body, emit);
   } catch (err) {
-    console.error('API Error:', err);
-    emit({
-      type: 'error',
-      error: err.message || 'Internal server error',
-      content: 'Sorry, I encountered an error connecting to the AI service. Please try again.',
-    });
+    const event = chatErrorEvent(err);
+    console.error('Chat error:', event.error);
+    emit(event);
   }
 
   res.end();

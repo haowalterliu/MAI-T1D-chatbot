@@ -1,10 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { toolDefinitions, executeTool } from './tools.js';
 
 // Tool-use loop cap. Compound queries like "find T1D stage 2 HPAP male donors"
 // legitimately require several filter_donors calls plus exploration, so keep
-// this generous. Each iteration is one Claude turn + (optionally) tool execution.
+// this generous. Each iteration is one model turn + (optionally) tool execution.
 const MAX_TOOL_LOOPS = 15;
 
 // Human-readable "skill" labels for each tool — used by the frontend chain-of-thoughts
@@ -43,131 +43,87 @@ function summarizeResult(name, result) {
   }
 }
 
-/**
- * Core agent loop. Calls `emit(event)` for every observable step so the caller
- * can stream events to clients (SSE) or collect them into a steps[] array.
- *
- * Event shapes:
- *   { type: 'iteration', n }
- *   { type: 'reasoning', text }               // text emitted by Claude before a tool call
- *   { type: 'tool_use', id, name, skill, icon, input }
- *   { type: 'tool_result', id, name, skill, summary }
- *   { type: 'done', content, usage, truncated? }
- *   { type: 'error', error, content }
- */
-export async function runAgent(body, emit = () => {}) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not set in .env');
-  }
+// Preserve optional parameters in the existing query tools.
+const tools = toolDefinitions.map(({ name, description, input_schema }) => ({
+  type: 'function', name, description, parameters: input_schema, strict: false,
+}));
 
-  const client = new Anthropic({ apiKey });
-
-  let messages = (body.messages || []).map(m => ({
-    role: m.role,
-    content: m.content,
-  }));
-
-  let loopCount = 0;
-  let finalResponse = null;
-  let lastResponse = null;
-
-  while (loopCount < MAX_TOOL_LOOPS) {
-    loopCount++;
-    emit({ type: 'iteration', n: loopCount });
-
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      // Keep sampling low so the response template (overview → bullets →
-      // cards) stays stable across runs. 0.2 (not 0) leaves a sliver of
-      // flexibility for tool-use decisions while eliminating prose drift.
-      temperature: 0.2,
-      system: SYSTEM_PROMPT,
-      tools: toolDefinitions,
-      messages,
-    });
-
-    lastResponse = response;
-
-    // Any text blocks produced before a tool call are the model's interim
-    // reasoning — surface them as reasoning events.
-    const textBlocks = response.content.filter(b => b.type === 'text');
-    if (response.stop_reason === 'tool_use') {
-      for (const tb of textBlocks) {
-        const t = (tb.text || '').trim();
-        if (t) emit({ type: 'reasoning', text: t });
-      }
-    }
-
-    if (response.stop_reason === 'tool_use') {
-      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
-
-      messages.push({ role: 'assistant', content: response.content });
-
-      const toolResults = [];
-      for (const toolUse of toolUseBlocks) {
-        const meta = TOOL_SKILL[toolUse.name] || { skill: toolUse.name, icon: '🔧' };
-        emit({
-          type: 'tool_use',
-          id: toolUse.id,
-          name: toolUse.name,
-          skill: meta.skill,
-          icon: meta.icon,
-          input: toolUse.input,
-        });
-
-        const result = executeTool(toolUse.name, toolUse.input);
-
-        emit({
-          type: 'tool_result',
-          id: toolUse.id,
-          name: toolUse.name,
-          skill: meta.skill,
-          summary: summarizeResult(toolUse.name, result),
-        });
-
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: JSON.stringify(result),
-        });
-      }
-
-      messages.push({ role: 'user', content: toolResults });
-      continue;
-    }
-
-    finalResponse = response;
-    break;
-  }
-
-  let payload;
-  if (!finalResponse) {
-    const partialText = (lastResponse?.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n')
-      .trim();
-    const note = 'The assistant reached the tool-use iteration limit while processing this request. Partial results (if any) are shown above. Try narrowing the query or breaking it into smaller steps.';
-    payload = {
-      content: partialText ? `${partialText}\n\n_${note}_` : note,
-      usage: lastResponse?.usage,
-      truncated: true,
-    };
-  } else {
-    const textContent = finalResponse.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n');
-    payload = { content: textContent, usage: finalResponse.usage };
-  }
-
-  emit({ type: 'done', ...payload });
-  return payload;
+function agentError(code) {
+  return Object.assign(new Error(code), { code });
 }
 
-// Backward-compatible non-streaming entry point.
+/** Keep the frontend SSE contract while using OpenAI Responses function calls. */
+export async function runAgent(body, emit = () => {}, options = {}) {
+  if (!Array.isArray(body?.messages) || body.messages.length === 0 ||
+      body.messages.some(m => !m || !['user', 'assistant'].includes(m.role) ||
+        typeof m.content !== 'string' || !m.content.trim())) {
+    throw agentError('INVALID_MESSAGES');
+  }
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!options.client && !apiKey) throw agentError('MISSING_API_KEY');
+  const client = options.client || new OpenAI({ apiKey, maxRetries: 0 });
+  const input = body.messages.map(({ role, content }) => ({ role, content }));
+  // One deadline for the entire tool loop, below the browser's 90-second cap.
+  const signal = AbortSignal.timeout(80000);
+
+  for (let n = 1; n <= MAX_TOOL_LOOPS; n++) {
+    emit({ type: 'iteration', n });
+    const response = await client.responses.create({
+      model: process.env.OPENAI_MODEL || 'gpt-6-astra',
+      instructions: SYSTEM_PROMPT,
+      input,
+      tools,
+      reasoning: { effort: 'low' },
+      max_output_tokens: 4096,
+      store: false,
+      include: ['reasoning.encrypted_content'],
+    }, { signal });
+
+    if (response.status !== 'completed') {
+      throw agentError(response.status === 'incomplete' ? 'INCOMPLETE_RESPONSE' : 'AI_RESPONSE_FAILED');
+    }
+    const output = response.output || [];
+    const calls = output.filter(item => item.type === 'function_call');
+    if (calls.length === 0) {
+      const content = output.filter(item => item.type === 'message')
+        .flatMap(item => item.content || [])
+        .filter(part => part.type === 'output_text')
+        .map(part => part.text).join('\n').trim();
+      if (!content) throw agentError('EMPTY_RESPONSE');
+      const payload = { content, usage: response.usage };
+      emit({ type: 'done', ...payload });
+      return payload;
+    }
+
+    // Retain all output items, including encrypted reasoning required for
+    // stateless tool continuation. Only tool activity is sent to the browser.
+    input.push(...output);
+    for (const call of calls) {
+      const meta = TOOL_SKILL[call.name] || { skill: call.name, icon: '🔧' };
+      let args;
+      let result;
+      try {
+        args = JSON.parse(call.arguments);
+        if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error();
+      } catch {
+        result = { error: 'Tool arguments must be a JSON object. Correct the arguments and retry.' };
+      }
+      emit({ type: 'tool_use', id: call.call_id, name: call.name, ...meta, input: args || {} });
+      if (!result) {
+        try {
+          result = executeTool(call.name, args);
+        } catch {
+          result = { error: 'Invalid tool parameters. Check the tool schema and retry.' };
+        }
+      }
+      emit({ type: 'tool_result', id: call.call_id, name: call.name, ...meta,
+        summary: summarizeResult(call.name, result) });
+      input.push({ type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(result) });
+    }
+  }
+  throw agentError('TOOL_LIMIT');
+}
+
 export async function handleChatRequest(body) {
   return runAgent(body);
 }

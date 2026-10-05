@@ -1,170 +1,70 @@
-import { demoDatasets } from '../data/demoDatasets';
-import { demoModels } from '../data/demoModels';
+import { demoDatasets } from '../data/demoDatasets.js';
+import { demoModels } from '../data/demoModels.js';
 
-/**
- * Send a message to the Claude API via the Vite middleware proxy.
- * Reads a Server-Sent Events stream so the caller can observe the agent's
- * tool-use steps live (via `onStep`). Falls back to mock responses if the
- * API is unavailable.
- *
- * @param {Array} messages - conversation history
- * @param {{ onStep?: (step: object, allSteps: object[]) => void }} opts
- */
+/** Read tool activity and the final answer. Fail visibly instead of fabricating results. */
 export async function sendMessage(messages, opts = {}) {
-  const { onStep } = opts;
-  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
+  const steps = [];
+  let reader;
+  const failed = (content) => ({ content, error: true, steps,
+    recommendations: null, modelRecommendations: null, tableOps: null });
   try {
-    const controller = new AbortController();
-    // 90s cap for long multi-tool runs.
-    const timeout = setTimeout(() => controller.abort(), 90000);
-
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages }),
       signal: controller.signal,
     });
-
     if (!response.ok || !response.body) {
-      clearTimeout(timeout);
-      console.warn('API returned non-OK status, falling back to mock');
-      return { ...generateMockResponse(lastMessage), steps: [] };
+      return failed(`The AI service could not be reached (HTTP ${response.status}). Please try again.`);
     }
-
-    const reader = response.body.getReader();
+    if (!response.headers.get('content-type')?.includes('text/event-stream')) {
+      return failed('The AI endpoint returned an unexpected response. Check the deployment configuration.');
+    }
+    reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    const steps = [];
-    let doneEvent = null;
-    let errorEvent = null;
-
+    let doneEvent;
+    let errorEvent;
+    const readFrame = (frame) => {
+      const data = frame.split(/\r?\n/).filter(line => line.startsWith('data:'))
+        .map(line => line.slice(5).trimStart()).join('\n');
+      if (!data) return;
+      const event = JSON.parse(data);
+      if (event.type === 'error') errorEvent = event;
+      else if (event.type === 'done') doneEvent = event;
+      else {
+        steps.push(event);
+        try { opts.onStep?.(event, steps.slice()); } catch { /* UI observer only */ }
+      }
+    };
     while (true) {
       const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      // SSE frames are separated by a blank line.
-      const frames = buffer.split('\n\n');
+      buffer += decoder.decode(value, { stream: !done });
+      const frames = buffer.split(/\r?\n\r?\n/);
       buffer = frames.pop() || '';
-
-      for (const frame of frames) {
-        const line = frame.split('\n').find(l => l.startsWith('data:'));
-        if (!line) continue;
-        let event;
-        try {
-          event = JSON.parse(line.slice(5).trim());
-        } catch {
-          continue;
-        }
-        if (event.type === 'done') {
-          doneEvent = event;
-        } else if (event.type === 'error') {
-          errorEvent = event;
-        } else {
-          steps.push(event);
-          try { onStep?.(event, steps.slice()); } catch (e) { /* ignore UI errors */ }
-        }
-      }
+      frames.forEach(readFrame);
+      if (done) { if (buffer.trim()) readFrame(buffer); break; }
     }
-
-    clearTimeout(timeout);
-
-    if (errorEvent || !doneEvent || !doneEvent.content) {
-      console.warn('API stream ended without a done event, falling back to mock');
-      return { ...generateMockResponse(lastMessage), steps };
-    }
-
+    if (errorEvent) return failed(errorEvent.content || 'The AI request failed. Please try again.');
+    if (!doneEvent?.content) return failed('The AI connection ended before an answer arrived. Please try again.');
     return { ...parseResponse(doneEvent.content), steps };
   } catch (err) {
-    console.warn('API call failed, falling back to mock:', err.message);
-    return { ...generateMockResponse(lastMessage), steps: [] };
+    return failed(err.name === 'AbortError'
+      ? 'The AI request timed out. Try a narrower query.'
+      : 'The AI connection failed. Please try again. No simulated results were substituted.');
+  } finally {
+    clearTimeout(timeout);
+    if (reader) {
+      try { await reader.cancel(); } catch { /* connection already closed */ }
+      reader.releaseLock();
+    }
   }
 }
 
 /**
- * Generate mock responses for prototype demo when API is unavailable.
- */
-function generateMockResponse(text) {
-  const hypothesis = 'compare beta cell gene expression patterns between pediatric and adult Type 1 Diabetes patients';
-
-  // Dataset recommendation
-  if (text.includes('recommend') && text.includes('dataset')) {
-    return {
-      content: `Based on your hypothesis to ${hypothesis}, I recommend the following datasets:`,
-      recommendations: [
-        { id: 'hpap', reason: 'HPAP provides comprehensive pancreatic islet cell data from adult donors (18–76 yrs) with RNA-seq, ideal for studying beta cell gene expression in adults.' },
-        { id: 'teddy', reason: 'TEDDY offers longitudinal pediatric cohort data (4–10 yrs) with RNA-seq from blood samples, enabling comparison of gene expression patterns in children at risk for T1D.' },
-      ],
-      modelRecommendations: null,
-    };
-  }
-
-  // Note: HPAP is real data (194 donors) — we no longer fabricate additional HPAP rows.
-  // The AI is instructed not to TABLE_ADD for HPAP in the system prompt.
-
-  // Remove rows from HPAP
-  if ((text.includes('remove') || text.includes('exclude')) && (text.includes('non-diabetic') || text.includes('t2d') || text.includes('nd'))) {
-    const hpapDataset = demoDatasets.find(d => d.id === 'hpap');
-    if (hpapDataset) {
-      const idKey = hpapDataset.idKey || 'donor_ID';
-      // HPAP real column: clinical_diagnosis — ND = Non-Diabetic, T2DM = Type 2
-      const toRemove = hpapDataset.sampleData
-        .filter(row => {
-          const dx = String(row.clinical_diagnosis || '').toUpperCase();
-          return dx.includes('ND') || dx.includes('T2D');
-        })
-        .map(row => row[idKey]);
-      return {
-        content: `I've identified ${toRemove.length} non-diabetic and T2D donors in HPAP and marked them for removal, as they are not relevant to a T1D-focused hypothesis.`,
-        recommendations: null,
-        modelRecommendations: null,
-        tableOps: [{ type: 'remove_rows', datasetId: 'hpap', donorIds: toRemove }],
-      };
-    }
-  }
-
-  // BMI filter — "only BMI > 25" or "BMI greater than 25"
-  if (text.includes('bmi') && (text.includes('>') || text.includes('greater') || text.includes('大於') || text.includes('only'))) {
-    // Find HPAP donors with BMI <= 25 to mark for removal (HPAP uses real Excel column names)
-    const hpapDataset = demoDatasets.find(d => d.id === 'hpap');
-    if (hpapDataset) {
-      const idKey = hpapDataset.idKey || 'donor_ID';
-      const toRemove = hpapDataset.sampleData
-        .filter(row => typeof row.BMI === 'number' && row.BMI <= 25)
-        .map(row => row[idKey]);
-      return {
-        content: `I've identified ${toRemove.length} donors in HPAP with BMI ≤ 25 and marked them for removal. This will focus your analysis on donors with BMI > 25, which may be relevant for studying metabolic factors in T1D.`,
-        recommendations: null,
-        modelRecommendations: null,
-        tableOps: [{
-          type: 'remove_rows',
-          datasetId: 'hpap',
-          donorIds: toRemove,
-        }],
-      };
-    }
-  }
-
-  // Model recommendation
-  if (text.includes('recommend') && text.includes('model')) {
-    return {
-      content: `Based on your hypothesis to ${hypothesis}, I recommend the following model:`,
-      recommendations: null,
-      modelRecommendations: [{ id: 'single-cell-fm' }],
-    };
-  }
-
-  // Generic response
-  return {
-    content: "I can help you explore T1D research datasets and models. Try asking me to recommend datasets or a model for your hypothesis.",
-    recommendations: null,
-    modelRecommendations: null,
-  };
-}
-
-/**
- * Parse Claude's response text, extracting markers into structured objects.
+ * Parse the model's response text, extracting markers into structured objects.
  * Supports: [DATASET:id], [MODEL:id], [TABLE_ADD:...], [TABLE_REMOVE:...]
  */
 function parseResponse(text) {
@@ -286,7 +186,7 @@ function parseResponse(text) {
 
 // Defensive filters for the optional note-line above each [DATASET:...] marker.
 // The system prompt already enforces these rules, but we strip any accidental
-// drift (LLM temperature is 0.2, not 0) so the card UI stays consistent.
+// drift (model output can vary) so the card UI stays consistent.
 const COUNT_RECAP_RE = /^(?:\d+|all \d+|a total of \d+)\s+(?:donors?|samples?)\s+(?:with|in|from|matching)\b[^.]*\.?\s*$/i;
 const BANNED_PHRASES_RE = /\b(?:ideal for[^.]*|makes it (?:ideal|suitable|perfect)[^.]*|provides comprehensive[^.]*|enables [a-z ]+ studies[^.]*|perfect for[^.]*)\.?/gi;
 const NOTE_MAX_LEN = 160;
@@ -294,7 +194,7 @@ const NOTE_MAX_LEN = 160;
 /**
  * Extract the optional note/caveat line directly above a [DATASET:...] marker.
  *
- * The note is an *optional* sentence per the system prompt: if Claude didn't
+ * The note is an *optional* sentence per the system prompt: if the model didn't
  * write one (e.g. the line right above the marker is a bullet, heading, or
  * empty), we return '' and the card renders without a rec-reason paragraph.
  *

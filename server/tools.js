@@ -167,7 +167,7 @@ const demoModels = [
   },
 ];
 
-// --- Tool Schemas (passed to Claude API) ---
+// --- Tool Schemas (adapted to OpenAI function tools by server/api.js) ---
 
 export const toolDefinitions = [
   {
