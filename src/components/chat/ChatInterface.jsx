@@ -11,7 +11,7 @@ import { extractQueryTags } from '../../utils/extractQueryTags';
 import './ChatInterface.css';
 
 function ChatInterface({ page }) {
-  const { messages, addMessage, config, addTableOp } = useExperiment();
+  const { messages, addMessage, addTableOp } = useExperiment();
   const messagesEndRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [liveSteps, setLiveSteps] = useState([]);
@@ -33,12 +33,13 @@ function ChatInterface({ page }) {
     setLiveSteps([]);
 
     try {
-      // Build conversation history for Claude (only role + content)
-      const claudeMessages = messages
+      // Build conversation history for the AI (only role + content)
+      const chatMessages = messages
+        .filter(m => !m.error && ['user', 'assistant'].includes(m.role))
         .map(m => ({ role: m.role, content: m.content }))
         .concat({ role: 'user', content: text });
 
-      const response = await sendMessage(claudeMessages, {
+      const response = await sendMessage(chatMessages, {
         onStep: (_step, allSteps) => setLiveSteps(allSteps),
       });
 
@@ -52,6 +53,7 @@ function ChatInterface({ page }) {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.content,
+        error: response.error || false,
         recommendations: recsWithTags,
         modelRecommendations: response.modelRecommendations,
         tableOps: response.tableOps || null,

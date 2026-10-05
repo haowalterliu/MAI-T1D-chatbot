@@ -1,4 +1,4 @@
-import { hpapRealData } from './hpapRealData';
+import { hpapRealData } from './hpapRealData.js';
 
 // Shorten verbose stage strings like
 //   "Stage 3: One or more autoantibodies and diagnostic hyperglycemia or T1D diagnosis"
